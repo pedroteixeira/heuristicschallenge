@@ -22,19 +22,16 @@ void Steiner::generate_chins_solution(vector<Edge>& tree_edges) {
 
 	vector<int> vertices_in_solution;
 	vertices_in_solution.push_back(t0);
-	int terminals_added = 1;
+	//int terminals_added = 1;
 
 	vector<Vertex> parent(V);
 	vector<double> distances(V);
 
 	boost::dijkstra_shortest_paths(graph, t0,
 				boost::weight_map(boost::get(&EdgeInfo::weight, graph))
-				.distance_map(boost::make_iterator_property_map(&distances[0], boost::get(boost::vertex_index, graph)))
+				.distance_map(&distances[0])
 				.predecessor_map(&parent[0])
 				);
-
-	cout << "dijkstra done" << endl;
-
 
 	//while (terminals_added < terminals.size()) {
 	//	terminals_added++;
@@ -66,7 +63,7 @@ Steiner::Steiner(string path) {
 
 	cout << "done reading." << endl;
 
-	//TODO: pre-calculate distances
+	//TODO: pre-calculate distances com warshall ?
 
 }
 
@@ -88,10 +85,11 @@ inline void Steiner::read_graph_section(ifstream & in_data) {
 		//add an edge to the graph
 		EdgeInfo edge;
 		edge.weight = weight;
-		boost::add_edge(node1, node2, edge, graph);
+		boost::add_edge(node1-1, node2-1, edge, graph);  //indices 0-based
 	}
 
 	assert((int)boost::num_edges(graph) == E);
+	assert((int)boost::num_vertices(graph) == V);
 }
 
 inline void Steiner::read_terminals_section(ifstream & in_data) {
@@ -114,7 +112,7 @@ inline void Steiner::read_terminals_section(ifstream & in_data) {
 inline void Steiner::read_coordinates_section(ifstream & in_data) {
 
 	//only for drawing
-	for (int i = 1; i <= V; i++) { /* indices of instances are 1-based */
+	for (int i = 0; i < V; i++) { /* indices are 0-based */
 		in_data.ignore(INT_MAX, ' ').ignore(INT_MAX, ' ') >> graph[i].x >> graph[i].y;
 	}
 
