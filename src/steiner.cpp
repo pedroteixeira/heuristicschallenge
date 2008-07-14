@@ -10,6 +10,8 @@
 #include <fstream>
 #include <iostream>
 
+#include <boost/progress.hpp>
+#include <boost/multi_array.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 
@@ -18,24 +20,77 @@ using namespace std;
 
 void Steiner::generate_chins_solution(vector<Edge>& tree_edges) {
 
-	int t0 = terminals[0];
+	map<int, vector<int> > distances_from_terminal;
+	map<int, vector<Vertex> > parents_from_terminal;
+
+	boost::timer timer;
+	cout << "pre-calculating distances from all terminals..." << endl;
+	for (vector<int>::const_iterator i = terminals.begin(); i != terminals.end(); ++i) {
+		int terminal = (*i);
+		vector<Vertex> parents(V);
+		vector<int> distances(V);
+
+		boost::dijkstra_shortest_paths(graph, terminal, boost::weight_map(boost::get(&EdgeInfo::weight,
+				graph)).distance_map(&distances[0]).predecessor_map(&parents[0]));
+
+		distances_from_terminal[terminal] = distances;
+		parents_from_terminal[terminal] = parents;
+	}
+	cout << "distances computed in " << timer.elapsed() << " seconds." << endl;
 
 	vector<int> vertices_in_solution;
+
+	//initialize list temp terminals (TODO: copy in random)
+	list<int> terminals_left(terminals.size());
+	copy(terminals.begin(), terminals.end(), terminals_left.begin());
+
+	//pick initial terminal
+	int t0 = terminals_left.front();
+	terminals_left.pop_front();
 	vertices_in_solution.push_back(t0);
-	//int terminals_added = 1;
 
-	vector<Vertex> parent(V);
-	vector<double> distances(V);
+	while (terminals_left.size() > 0) {
+		//choose terminal closest to any of the vertices added
+		int closest_distance = INT_MAX;
+		int closest_terminal, closest_vertex_in_tree;
+		foreach(int t, terminals_left) {
 
-	boost::dijkstra_shortest_paths(graph, t0,
-				boost::weight_map(boost::get(&EdgeInfo::weight, graph))
-				.distance_map(&distances[0])
-				.predecessor_map(&parent[0])
-				);
+			vector<int> distances = distances_from_terminal[t];
+			vector<Vertex> parents = parents_from_terminal[t];
 
-	//while (terminals_added < terminals.size()) {
-	//	terminals_added++;
-	//}
+			foreach(int v, vertices_in_solution) {
+				if(distances[v] < closest_distance) {
+					closest_distance = distances[v];
+					closest_terminal = t;
+					closest_vertex_in_tree = v;
+					break;
+				}
+			}
+		}
+
+		assert(closest_distance != INT_MAX);
+		cout << "closest terminal is " << closest_terminal << " to vertex " << closest_vertex_in_tree;
+		terminals_left.remove(closest_terminal);
+
+		//add all vertices in this path (and edges to tree)
+		cout << " | path is ";
+		Vertex parent = closest_vertex_in_tree;
+		Vertex next;
+		while(parent != closest_terminal) {
+			next = parents_from_terminal[closest_terminal][parent];
+
+			Edge e; bool found;
+			boost::tie(e, found) = boost::edge(parent, next, graph);
+			tree_edges.push_back(e);
+			vertices_in_solution.push_back(parent);
+
+			cout << parent << " - " << next << "[" << graph[e].weight << "] ";
+			parent = next;
+		}
+		cout << endl;
+	}
+
+
 
 }
 
@@ -63,7 +118,17 @@ Steiner::Steiner(string path) {
 
 	cout << "done reading." << endl;
 
-	//TODO: pre-calculate distances com warshall ?
+	/*
+	 cout << "pre-calculating all distances..." << endl;
+	 boost::timer t0;
+
+	 vector < int > d(V, (std::numeric_limits < int >::max)());
+	 boost::multi_array<int, 2> distances(boost::extents[V][V]);
+	 boost::johnson_all_pairs_shortest_paths(graph, distances,
+	 boost::distance_map(&d[0]).weight_map(boost::get(&EdgeInfo::weight, graph)) );
+
+	 cout << "all distances computed in " << t0.elapsed() << " seconds." << endl;
+	 */
 
 }
 
@@ -85,7 +150,7 @@ inline void Steiner::read_graph_section(ifstream & in_data) {
 		//add an edge to the graph
 		EdgeInfo edge;
 		edge.weight = weight;
-		boost::add_edge(node1-1, node2-1, edge, graph);  //indices 0-based
+		boost::add_edge(node1 - 1, node2 - 1, edge, graph); //indices are 0-based
 	}
 
 	assert((int)boost::num_edges(graph) == E);
@@ -101,8 +166,8 @@ inline void Steiner::read_terminals_section(ifstream & in_data) {
 
 	int terminal_node;
 	for (int i = 0; i < number_terminals; i++) {
-		in_data.ignore(INT_MAX, ' ') >> terminal_node;
-		terminals.push_back(terminal_node);
+		in_data.ignore(INT_MAX, ' ') >> terminal_node; //indices are 0-based
+		terminals.push_back(terminal_node - 1);
 	}
 
 	assert((int)terminals.size() == number_terminals);

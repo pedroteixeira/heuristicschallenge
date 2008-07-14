@@ -323,6 +323,18 @@ src/ant.d src/ant.o: ../src/ant.cpp \
   /opt/boost-1.35/include/boost-1_35/boost/optional/optional_fwd.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/graph/adjacency_iterator.hpp \
   ../src/headers/steiner.hpp ../src/headers/util.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/foreach.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/mpl/logical.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/noncopyable.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/end.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/config.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/detail/implementation_help.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/detail/common.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/detail/sfinae.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/iterator.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/mutable_iterator.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/const_iterator.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/range/begin.hpp \
   ../src/headers/ant.hpp ../src/headers/steiner.hpp
 
 /opt/boost-1.35/include/boost-1_35/boost/graph/adjacency_list.hpp:
@@ -974,6 +986,30 @@ src/ant.d src/ant.o: ../src/ant.cpp \
 ../src/headers/steiner.hpp:
 
 ../src/headers/util.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/foreach.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/mpl/logical.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/noncopyable.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/end.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/config.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/detail/implementation_help.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/detail/common.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/detail/sfinae.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/iterator.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/mutable_iterator.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/const_iterator.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/range/begin.hpp:
 
 ../src/headers/ant.hpp:
 

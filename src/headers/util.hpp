@@ -11,6 +11,9 @@
 #include <string>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
 
 struct VertexInfo {
 	int x;
