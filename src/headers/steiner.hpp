@@ -22,7 +22,8 @@ public:
 	Steiner(std::string);
 	~Steiner();
 
-	void generate_chins_solution(std::vector<Edge>&);
+	void generate_chins_solution(Graph&, std::vector<Edge>&);
+	int find_cost(const Graph&, const std::vector<Edge>&);
 
 private:
 	void read_graph_section(std::ifstream&);

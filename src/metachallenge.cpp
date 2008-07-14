@@ -15,7 +15,7 @@ using namespace std;
 
 int main() {
 
-	const string steiner_1_path = "data/steiner-1-2353.stp"; //ótimo 2353
+	const string steiner_1_path = "data/steiner-1-2353.stp"; //0.2 para < 2420, 0.5 para < 2390
 
 	SaSteiner sa_steiner(steiner_1_path);
 	sa_steiner.run();

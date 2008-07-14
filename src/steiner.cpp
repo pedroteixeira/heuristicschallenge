@@ -14,11 +14,12 @@
 #include <boost/multi_array.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
+#include <boost/graph/kruskal_min_spanning_tree.hpp>
 
 #include "headers/steiner.hpp"
 using namespace std;
 
-void Steiner::generate_chins_solution(vector<Edge>& tree_edges) {
+void Steiner::generate_chins_solution(Graph& sub_graph, vector<Edge>& spanning_tree) {
 
 	map<int, vector<int> > distances_from_terminal;
 	map<int, vector<Vertex> > parents_from_terminal;
@@ -63,35 +64,59 @@ void Steiner::generate_chins_solution(vector<Edge>& tree_edges) {
 					closest_distance = distances[v];
 					closest_terminal = t;
 					closest_vertex_in_tree = v;
-					break;
 				}
 			}
 		}
 
 		assert(closest_distance != INT_MAX);
-		cout << "closest terminal is " << closest_terminal << " to vertex " << closest_vertex_in_tree;
+
 		terminals_left.remove(closest_terminal);
 
-		//add all vertices in this path (and edges to tree)
-		cout << " | path is ";
-		Vertex parent = closest_vertex_in_tree;
-		Vertex next;
+		//add all vertices in this path (that were not already added)
+		Vertex parent = closest_vertex_in_tree, next;
 		while(parent != closest_terminal) {
 			next = parents_from_terminal[closest_terminal][parent];
 
-			Edge e; bool found;
-			boost::tie(e, found) = boost::edge(parent, next, graph);
-			tree_edges.push_back(e);
-			vertices_in_solution.push_back(parent);
+			if(find(vertices_in_solution.begin(), vertices_in_solution.end(), parent)==vertices_in_solution.end())
+				vertices_in_solution.push_back(parent);
 
-			cout << parent << " - " << next << "[" << graph[e].weight << "] ";
 			parent = next;
 		}
-		cout << endl;
+		//finish adding last vertex in the path
+		if(find(vertices_in_solution.begin(), vertices_in_solution.end(), closest_terminal)==vertices_in_solution.end())
+			vertices_in_solution.push_back(closest_terminal);
 	}
 
 
+	//create a sub graph structure with only the vertices added so far
+	foreach(int v, vertices_in_solution) {
+		boost::graph_traits<Graph>::adjacency_iterator vi, viend;
+		for (boost::tie(vi,viend) = boost::adjacent_vertices(v, graph); vi != viend; ++vi) {
 
+			if(find(vertices_in_solution.begin(), vertices_in_solution.end(), *vi)!=vertices_in_solution.end()) {
+
+				Edge e; bool found;
+				boost::tie(e, found) = boost::edge(v, *vi, graph); assert(found);
+
+				//add edge with same EdgeInfo TODO: find best way to share these info for subgraphs
+				boost::add_edge(v, *vi, graph[e], sub_graph);
+			}
+		}
+	}
+
+	//find MST on sub_graph
+	boost::kruskal_minimum_spanning_tree(sub_graph, back_inserter(spanning_tree),
+			boost::weight_map(boost::get(&EdgeInfo::weight, sub_graph)));
+
+
+}
+
+int Steiner::find_cost(const Graph& sub_graph, const vector<Edge>& edges) {
+	int total = 0;
+	foreach(Edge e, edges) {
+		total += sub_graph[e].weight;
+	}
+	return total;
 }
 
 Steiner::Steiner(string path) {

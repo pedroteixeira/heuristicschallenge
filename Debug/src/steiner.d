@@ -384,6 +384,9 @@ src/steiner.d src/steiner.o: ../src/steiner.cpp \
   /opt/boost-1.35/include/boost-1_35/boost/graph/exception.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/pending/relaxed_heap.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/none.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/graph/kruskal_min_spanning_tree.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/pending/disjoint_sets.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/pending/detail/disjoint_sets.hpp \
   ../src/headers/steiner.hpp ../src/headers/util.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/foreach.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/mpl/logical.hpp \
@@ -1166,6 +1169,12 @@ src/steiner.d src/steiner.o: ../src/steiner.cpp \
 /opt/boost-1.35/include/boost-1_35/boost/pending/relaxed_heap.hpp:
 
 /opt/boost-1.35/include/boost-1_35/boost/none.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/graph/kruskal_min_spanning_tree.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/pending/disjoint_sets.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/pending/detail/disjoint_sets.hpp:
 
 ../src/headers/steiner.hpp:
 
