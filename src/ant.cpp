@@ -24,8 +24,6 @@ AntSteiner::AntSteiner(string instance_path) {
 
 void AntSteiner::run() {
 
-//
-
 
 
 }

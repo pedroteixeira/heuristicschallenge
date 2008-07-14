@@ -7,6 +7,7 @@ CPP_SRCS += \
 ../src/ant.cpp \
 ../src/cvrp.cpp \
 ../src/metachallenge.cpp \
+../src/sa.cpp \
 ../src/steiner.cpp \
 ../src/util.cpp 
 
@@ -14,6 +15,7 @@ OBJS += \
 ./src/ant.o \
 ./src/cvrp.o \
 ./src/metachallenge.o \
+./src/sa.o \
 ./src/steiner.o \
 ./src/util.o 
 
@@ -21,6 +23,7 @@ CPP_DEPS += \
 ./src/ant.d \
 ./src/cvrp.d \
 ./src/metachallenge.d \
+./src/sa.d \
 ./src/steiner.d \
 ./src/util.d 
 

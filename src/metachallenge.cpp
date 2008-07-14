@@ -11,12 +11,14 @@ using namespace std;
 
 #include "headers/steiner.hpp"
 #include "headers/ant.hpp"
+#include "headers/sa.hpp"
 
 int main() {
 
 	const string steiner_1_path = "data/steiner-1-2353.stp"; //ótimo 2353
 
-	AntSteiner ant_steiner(steiner_1_path);
+	SaSteiner sa_steiner(steiner_1_path);
+	sa_steiner.run();
 
 
 

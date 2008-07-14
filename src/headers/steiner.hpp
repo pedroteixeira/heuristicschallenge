@@ -17,11 +17,12 @@ class Steiner {
 public:
 	int V; //number of vertices
 	int E; //number of edges
-	int number_terminals;
 	Graph graph;
-	int* terminals;
+	std::vector<int> terminals;
 	Steiner(std::string);
 	~Steiner();
+
+	void generate_chins_solution(std::vector<Edge>&);
 
 private:
 	void read_graph_section(std::ifstream&);

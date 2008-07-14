@@ -18,4 +18,5 @@ public:
 private:
 	Steiner* instance;
 };
+
 #endif /* ANT_HPP_ */

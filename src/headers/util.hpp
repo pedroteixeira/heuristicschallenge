@@ -12,16 +12,20 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/tuple/tuple.hpp>
 
-struct Node {
+struct VertexInfo {
 	int x;
 	int y;
 };
 
-struct Edge {
+struct EdgeInfo {
 	int weight;
 };
 
-typedef boost::adjacency_list < boost::listS, boost::vecS, boost::undirectedS, Node, Edge > Graph;
+typedef boost::adjacency_list < boost::listS, boost::vecS, boost::undirectedS, VertexInfo, EdgeInfo > Graph;
+
+typedef boost::graph_traits < Graph >::edge_descriptor Edge;
+typedef boost::graph_traits < Graph >::vertex_descriptor Vertex;
+
 
 class Util {
 public:
