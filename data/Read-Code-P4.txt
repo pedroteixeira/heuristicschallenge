@@ -1,0 +1,300 @@
+//==================================================================
+//==================================================================
+
+// Read CVRP
+
+//==================================================================
+
+  
+  
+  // Try to open the input file
+  printf( "Opening file %s\n", fname );
+  fin = fopen( fname, "rt" );
+  
+  if (!fin)
+  {
+    printf( "Unable to open file %s\n", fname );
+    throw(FILENOTOPENEXCEPTION);
+    return;
+  }
+  
+  // Find the problem dimension
+  fscanf( fin, "%s\n", readBuffer );
+  while (!strNCaseCmp( "DIMENSION", readBuffer, 9 ))
+    fscanf( fin, "%s\n", readBuffer );
+  
+  fscanf( fin, ":\n" );
+  fscanf( fin, "%i\n", &n );
+  
+  // Allocates the graph
+  depot = n;
+  g->allocate( n, (n * (n - 1) / 2) );
+  
+  // Edge weight type
+  fscanf( fin, "%s\n", readBuffer );
+  while (!strNCaseCmp( "EDGE_WEIGHT_TYPE", readBuffer, 16 ))
+    fscanf( fin, "%s\n", readBuffer );
+  
+  fscanf( fin, ":\n" );
+  fscanf( fin, "%s\n", weightType );
+  
+  // Capacity of each vehicle
+  fscanf( fin, "%s\n", readBuffer );
+  while (!strNCaseCmp( "CAPACITY", readBuffer, 8 ))
+    fscanf( fin, "%s\n", readBuffer );
+  
+  fscanf( fin, ":\n" );
+  
+  // Sets the vehicle capacity
+  fscanf( fin, "%i\n", &vehicleCapacity );
+  
+  if (strNCaseCmp( "EUC_2D", weightType, 6 ))
+  {
+    // Node coordinates
+    fscanf( fin, "%s\n", readBuffer );
+    while (!strNCaseCmp( "NODE_COORD_SECTION", readBuffer, 18 ))
+      fscanf( fin, "%s\n", readBuffer );
+    
+    // Read the node coordinates
+    //fscanf( fin, "%i %i %i", &aux1, &aux2, &aux3 );
+    fscanf( fin, "%i\n",&aux1);
+    fscanf( fin, "%s\n",readBuffer);
+    //g->setVertexX( n, aux2 );
+    //g->setVertexY( n, aux3 );
+    g->setVertexX( n, atof(readBuffer) );
+    fscanf( fin, "%s\n",readBuffer);
+    g->setVertexY( n, atof(readBuffer) ); 
+    for (i = 1; i < n; i++)
+    {
+      //fscanf( fin, "%i %i %i", &aux1, &aux2, &aux3 );
+      //g->setVertexX( i, aux2 );
+      //g->setVertexY( i, aux3 );
+      fscanf( fin, "%i\n", &aux1 );
+      fscanf( fin, "%s\n", readBuffer );
+      g->setVertexX( i, atof(readBuffer ) );
+      fscanf( fin, "%s\n", readBuffer );
+      g->setVertexY( i, atof( readBuffer ) );
+    }
+    
+    // Calculates the distance matrix
+    sumAllEdges = 0;
+    
+    for (i = 2; i <= n; i++)
+    {
+      for (j = 1; j < i; j++)
+      {
+        d = ((g->getVertexX(i) - g->getVertexX(j))*(g->getVertexX(i) - g->getVertexX(j))) +
+            ((g->getVertexY(i) - g->getVertexY(j))*(g->getVertexY(i) - g->getVertexY(j)));
+        
+        d = sqrt( d );
+        g->setEdgeCost( i, j, (int) (d + 0.5) );
+        sumAllEdges += (int) (d + 0.5);
+      }
+    }
+    
+    // Sets the format of the file to be printed in tsp view
+    tspView = true;
+  }
+  else
+    if (strNCaseCmp( "EXPLICIT", weightType, 8 ))
+    {
+      // Edge weights
+      fscanf( fin, "%s\n", readBuffer );
+      while (!strNCaseCmp( "EDGE_WEIGHT_SECTION", readBuffer, 19 ))
+        fscanf( fin, "%s\n", readBuffer );
+      
+      // Calculates the distance matrix
+      sumAllEdges = 0;
+
+      for (i = 1; i < n; i++)
+      {
+        for (j = 0; j < i; j++)
+        {
+          fscanf( fin, "%i", &aux1 );
+          
+          if (j == 0)
+            g->setEdgeCost( n, i, aux1 );
+          else
+            g->setEdgeCost( i, j, aux1 );
+          sumAllEdges += aux1;
+        }
+      }
+
+      // Sets the format of the file to be printed in tsp view
+      tspView = false;
+    }
+  
+  // Find the node demands
+  fscanf( fin, "%s\n", readBuffer );
+  while (!strNCaseCmp( "DEMAND_SECTION", readBuffer, 14 ) )
+    fscanf( fin, "%s\n", readBuffer );
+  
+  // Allocate the demand list
+  listDemands = new int[n + 1];
+  
+  // Read the demands
+  fscanf( fin, "%i %i\n", &aux1, &aux2 );
+  listDemands[n] = aux2;
+  sumAllDemands  = aux2;
+  for (i = 1; i < n; i++)
+  {
+    fscanf( fin, "%i %i\n", &aux1, &aux2 );
+    listDemands[i] = aux2;
+    sumAllDemands += aux2;
+  }
+  
+
+//==================================================================
+//==================================================================
+
+
+// Read Steiner
+
+//==================================================================
+
+
+	input = fopen (filename,"r");
+	if (input == NULL) {
+		if (verbose > 0) fprintf (stderr, "Could not open file %s.\n", filename);
+		return 1;
+	}
+
+	//first section (one line): number of vertices and edges
+	if (fscanf (input, "%d %d\n", &nvertices, &nedges) != 2) {
+		if (verbose > 0) fprintf (stderr, "Error reading graph size.\n");
+		return 2;
+	}
+
+	//u_instance = new BossaUndirectedInstance();
+	this->init (nvertices, filename);
+		
+	//second section: edges
+	for (int e = 0; e < nedges; e++) {
+		int v1, v2, w;
+		if (fscanf (input, "%d %d %d", &v1, &v2, &w) != 3) {
+			if (verbose > 0) fprintf (stderr, "Error reading edge %d.\n", e);
+			return 3;
+		}
+		insertEdge (v1, v2, w);
+	}
+
+	//third section (one line): number of terminals
+	if (fscanf (input, "%d", &nterminals) !=1) {
+		if (verbose > 0) fprintf (stderr, "Error reading the number of terminals!\n");
+		return 4;
+	}
+
+	//fourth section: terminals	
+	for (int i = 0; i < nterminals; i++) {
+		int t;
+		if (fscanf (input,"%d", &t) != 1) {
+			if (verbose > 0) fprintf (stderr, "Error reading terminal %d.\n", t);
+			return 5;
+		} 
+		setTerminal(t);
+	}
+
+	//fifth section: preprocessed cost
+	fscanf (input, "\n");
+	int temp;
+	if (fscanf(input, "c %d", &temp) == 1) {
+		setBaseCost ((BossaCost)temp);
+		//fprintf (stderr, "WARNING: this ORLib file contains a base cost (%d). This feature is deprecated.\n", temp);
+	}
+
+	//that's it: close the file
+	if (fclose(input)) {
+		if (verbose > 1) fprintf (stderr, "WARNING: could not close file %s.\n", filename);
+	}
+
+
+//==================================================================
+
+// Read GAP
+
+//==================================================================
+
+  problemas = new problema[numProblemas];
+
+  for(i = 0; i < numProblemas; i++)
+  {
+    fscanf(entrada,"%d", &problemas[i].numAgentes);
+    fscanf(entrada,"%d", &problemas[i].numTrabalhos);
+
+    problemas[i].custos = new int*[problemas[i].numAgentes];
+    problemas[i].recursos = new int*[problemas[i].numAgentes];
+    problemas[i].capacidades = new int[problemas[i].numAgentes];
+
+    for(j = 0; j < problemas[i].numAgentes; j++)
+    {
+      problemas[i].custos[j] = new int[problemas[i].numTrabalhos];
+      problemas[i].recursos[j] = new int[problemas[i].numTrabalhos];
+    }
+    
+    //lendo os custos
+    for(j = 0; j < problemas[i].numAgentes; j++)
+    {      
+      for(k = 0; k < problemas[i].numTrabalhos; k++)
+      {
+        fscanf(entrada,"%d",&problemas[i].custos[j][k]);
+      }
+    }
+
+    //lendo os recursos consumidos
+    for(j = 0; j < problemas[i].numAgentes; j++)
+    {
+      for(k = 0; k < problemas[i].numTrabalhos; k++)
+      {
+        fscanf(entrada,"%d",&problemas[i].recursos[j][k]);
+      }
+    }
+
+    //lendo as capacidades
+    for(j = 0; j < problemas[i].numAgentes; j++)
+    {
+      fscanf(entrada,"%d",&problemas[i].capacidades[j]);
+    }
+  }
+
+
+//==================================================================
+//==================================================================
+
+// Read Dominating Set
+
+//==================================================================
+
+
+  p_file = fopen(file,"r");
+
+  fscanf(p_file,"%d %d", &VERTICES, &card);
+
+  printf(" N = %d\n",VERTICES);
+
+  N_VARIABLES = VERTICES;
+
+  for (i=1; i<=N_VARIABLES; i++)
+    {
+      C_V[i][0] = 0;
+    }
+  for (i=1; i<=VERTICES; i++)
+    {
+      V_C[i][0] = card;
+      for (j=1; j<=card; j++)
+        {
+	  fscanf(p_file," %d ",&kk);
+	  V_C[i][j] = kk;
+	  pos = C_V[kk][0];
+	  pos++;
+	  C_V[kk][pos] = i;
+	  C_V[kk][0] = pos;
+        }
+
+    }
+
+  fclose (p_file);
+
+
+//==================================================================
+
+
