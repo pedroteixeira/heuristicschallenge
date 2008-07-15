@@ -8,9 +8,6 @@
 #ifndef STEINER_HPP_
 #define STEINER_HPP_
 
-#include <string>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/tuple/tuple.hpp>
 #include "util.hpp"
 
 class Steiner {
@@ -19,13 +16,14 @@ public:
 	int E; //number of edges
 	Graph graph;
 	std::vector<int> terminals;
+	std::map<int, std::vector<int> > distances_from_terminal;
+	std::map<int, std::vector<Vertex> > parents_from_terminal;
 	Steiner(std::string);
+	Steiner();
 	~Steiner();
 
-	void generate_chins_solution(Graph&, std::vector<Edge>&);
-	int find_cost(const Graph&, const std::vector<Edge>&);
-
 private:
+
 	void read_graph_section(std::ifstream&);
 	void read_terminals_section(std::ifstream&);
 	void read_coordinates_section(std::ifstream&);

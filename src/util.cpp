@@ -31,4 +31,14 @@ void Util::render_dot(string path, Graph graph) {
 	}
 	dot_file << "}";
 
+	/*
+	boost::dynamic_properties dp;
+		dp.property("id", boost::get(boost::vertex_index, solution_subgraph));
+		dp.property("weight", boost::get(&EdgeInfo::weight, solution_subgraph));
+		ofstream out("tree.dot");
+		boost::write_graphviz(out, solution_subgraph, dp, std::string("id"));
+		*/
+
 }
+
+

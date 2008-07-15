@@ -9,6 +9,7 @@ CPP_SRCS += \
 ../src/metachallenge.cpp \
 ../src/sa.cpp \
 ../src/steiner.cpp \
+../src/steiner_solution.cpp \
 ../src/util.cpp 
 
 OBJS += \
@@ -17,6 +18,7 @@ OBJS += \
 ./src/metachallenge.o \
 ./src/sa.o \
 ./src/steiner.o \
+./src/steiner_solution.o \
 ./src/util.o 
 
 CPP_DEPS += \
@@ -25,6 +27,7 @@ CPP_DEPS += \
 ./src/metachallenge.d \
 ./src/sa.d \
 ./src/steiner.d \
+./src/steiner_solution.d \
 ./src/util.d 
 
 

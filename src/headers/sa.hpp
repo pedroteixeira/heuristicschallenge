@@ -9,6 +9,7 @@
 #define SA_HPP_
 
 #include "steiner.hpp"
+#include "steiner_solution.hpp"
 
 class SaSteiner {
 public:
@@ -16,7 +17,10 @@ public:
 	~SaSteiner();
 	void run();
 private:
-	Steiner* instance;
+	Steiner instance;
+	SteinerSolution solution;
+	int energy;
+	void record_best(const SteinerSolution&, const int&);
 };
 
 

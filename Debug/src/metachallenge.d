@@ -1,5 +1,5 @@
 src/metachallenge.d src/metachallenge.o: ../src/metachallenge.cpp \
-  ../src/headers/steiner.hpp \
+  ../src/headers/steiner.hpp ../src/headers/util.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/graph/adjacency_list.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/config.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/config/user.hpp \
@@ -323,7 +323,6 @@ src/metachallenge.d src/metachallenge.o: ../src/metachallenge.cpp \
   /opt/boost-1.35/include/boost-1_35/boost/utility/compare_pointees.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/optional/optional_fwd.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/graph/adjacency_iterator.hpp \
-  ../src/headers/util.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/foreach.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/mpl/logical.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/noncopyable.hpp \
@@ -336,9 +335,47 @@ src/metachallenge.d src/metachallenge.o: ../src/metachallenge.cpp \
   /opt/boost-1.35/include/boost-1_35/boost/range/mutable_iterator.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/range/const_iterator.hpp \
   /opt/boost-1.35/include/boost-1_35/boost/range/begin.hpp \
-  ../src/headers/ant.hpp ../src/headers/steiner.hpp ../src/headers/sa.hpp
+  ../src/headers/ant.hpp ../src/headers/steiner.hpp ../src/headers/sa.hpp \
+  ../src/headers/steiner_solution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/linear_congruential.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/detail/const_mod.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/integer_traits.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/additive_combine.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/inversive_congruential.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/shuffle_output.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/mersenne_twister.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/detail/ptr_helper.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/lagged_fibonacci.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/uniform_01.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/detail/pass_through_engine.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/ranlux.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/subtract_with_carry.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/discard_block.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/linear_feedback_shift.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/xor_combine.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/random_number_generator.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/uniform_int.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/uniform_smallint.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/detail/signed_unsigned_tools.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/variate_generator.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/detail/uniform_int_float.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/uniform_real.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/triangle_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/bernoulli_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/cauchy_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/exponential_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/geometric_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/normal_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/lognormal_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/poisson_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/gamma_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/binomial_distribution.hpp \
+  /opt/boost-1.35/include/boost-1_35/boost/random/uniform_on_sphere.hpp
 
 ../src/headers/steiner.hpp:
+
+../src/headers/util.hpp:
 
 /opt/boost-1.35/include/boost-1_35/boost/graph/adjacency_list.hpp:
 
@@ -986,8 +1023,6 @@ src/metachallenge.d src/metachallenge.o: ../src/metachallenge.cpp \
 
 /opt/boost-1.35/include/boost-1_35/boost/graph/adjacency_iterator.hpp:
 
-../src/headers/util.hpp:
-
 /opt/boost-1.35/include/boost-1_35/boost/foreach.hpp:
 
 /opt/boost-1.35/include/boost-1_35/boost/mpl/logical.hpp:
@@ -1017,3 +1052,75 @@ src/metachallenge.d src/metachallenge.o: ../src/metachallenge.cpp \
 ../src/headers/steiner.hpp:
 
 ../src/headers/sa.hpp:
+
+../src/headers/steiner_solution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/linear_congruential.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/detail/const_mod.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/integer_traits.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/additive_combine.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/inversive_congruential.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/shuffle_output.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/mersenne_twister.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/detail/ptr_helper.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/lagged_fibonacci.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/uniform_01.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/detail/pass_through_engine.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/ranlux.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/subtract_with_carry.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/discard_block.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/linear_feedback_shift.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/xor_combine.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/random_number_generator.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/uniform_int.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/uniform_smallint.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/detail/signed_unsigned_tools.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/variate_generator.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/detail/uniform_int_float.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/uniform_real.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/triangle_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/bernoulli_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/cauchy_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/exponential_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/geometric_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/normal_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/lognormal_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/poisson_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/gamma_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/binomial_distribution.hpp:
+
+/opt/boost-1.35/include/boost-1_35/boost/random/uniform_on_sphere.hpp:
