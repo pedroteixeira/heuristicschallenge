@@ -55,10 +55,10 @@ Steiner::Steiner(string path) {
 	cout << "pre-calculating distances from all terminals..." << endl;
 	for (vector<Vertex>::const_iterator i = terminals.begin(); i != terminals.end(); ++i) {
 		Vertex terminal = (*i);
-		vector<Vertex> parents(V);
-		vector<Vertex> distances(V);
+		DistanceMap distances;
+		PredecessorMap parents;
 
-
+		graph.dijkstra_shortest_paths(terminal, distances, parents);
 
 		distances_from_terminal[terminal] = distances;
 		parents_from_terminal[terminal] = parents;
@@ -74,8 +74,6 @@ inline void Steiner::read_graph_section(ifstream & in_data) {
 
 	cout << "instance has " << V << " vertices and " << E << " edges." << endl;
 
-	graph = Graph(V);
-
 	string line;
 	int node1, node2, weight;
 
@@ -83,9 +81,7 @@ inline void Steiner::read_graph_section(ifstream & in_data) {
 		in_data.ignore(INT_MAX, ' ') >> node1 >> node2 >> weight;
 
 		//add an edge to the graph (indices are 0-based)
-		EdgeInfo edge;
-		edge.weight = weight;
-		graph.add_edge(node1-1, node2-1, edge);
+		graph.add_edge(node1-1, node2-1, weight);
 	}
 
 	assert(graph.num_edges() == E);
@@ -115,8 +111,9 @@ inline void Steiner::read_coordinates_section(ifstream & in_data) {
 
 	//only for drawing
 	for (int i = 0; i < V; i++) { /* indices are 0-based */
-		VertexInfo info = graph.get_vertex_info(i);
+		VertexInfo info;
 		in_data.ignore(INT_MAX, ' ').ignore(INT_MAX, ' ') >> info.x >> info.y;
+		vertices_info[i] = info;
 	}
 
 }

@@ -10,23 +10,31 @@ using namespace std;
 #include "headers/util.hpp"
 #include "headers/graph.hpp"
 
+
 Graph::Graph() {
+	init();
 }
 
-Graph::Graph(int V) {
-	boostgraph = BoostGraph(V);
+Graph::Graph(const Graph& graph) {
+	boostgraph = BoostGraph(graph.boostgraph);
+	init();
+}
+
+void Graph::init() {
 	indexmap = boost::get(boost::vertex_index, boostgraph);
 }
 
-void Graph::dijkstra_shortest_paths(const Vertex& from, vector<Vertex>& distances, std::vector<Vertex>& parents) {
 
-	boost::dijkstra_shortest_paths(boostgraph, from, boost::weight_map(boost::get(&EdgeInfo::weight,	boostgraph))
-			.distance_map(boost::make_iterator_property_map(distances.begin(), indexmap))
-			.predecessor_map(&parents[0]));
+void Graph::dijkstra_shortest_paths(const Vertex& from, DistanceMap& d, PredecessorMap& p) {
 
+	d = boost::get(boost::vertex_distance, boostgraph);
+	p = boost::get(boost::vertex_predecessor, boostgraph);
+
+	boost::dijkstra_shortest_paths(boostgraph, from,
+			boost::distance_map(d).predecessor_map(p));
 }
 
-void Graph::add_edge(int u_index, int v_index, EdgeInfo edgeInfo) {
+void Graph::add_edge(int u_index, int v_index, int weight) {
 
 	Vertex u, v;
 
@@ -43,23 +51,33 @@ void Graph::add_edge(int u_index, int v_index, EdgeInfo edgeInfo) {
 		else
 			v = boost::add_vertex(boostgraph);
 
-
-	boostgraph[u].index = u_index;
-	boostgraph[v].index = v_index;
-
 	index_bimap.insert( MapPair(u_index, u ) );
 	index_bimap.insert( MapPair(v_index, v ) );
 
-	boost::add_edge(u, v, edgeInfo, boostgraph);
+	boost::add_edge(u, v, weight, boostgraph);
 }
 
 Vertex Graph::get_vertex(int v) {
 	return index_bimap.left.at(v);
 }
 
-VertexInfo Graph::get_vertex_info(int v) {
-	return boostgraph[get_vertex(v)];
+int Graph::index_for_vertex(Vertex v) {
+	return index_bimap.right.at(v);
 }
+
+bool Graph::contains_vertex(int v) {
+	return index_bimap.left.find(v) != index_bimap.left.end();
+}
+
+int Graph::get_edge_weight(Vertex v, Vertex u) {
+	Edge e; bool found;
+	boost::tie(e, found) = boost::edge(v, u, boostgraph); assert(found);
+
+	boost::property_map<BoostGraph, boost::edge_weight_t>::type weightmap;
+	weightmap = boost::get(boost::edge_weight, boostgraph);
+	return boost::get(weightmap, e);
+}
+
 
 int Graph::num_vertices() {
 	return boost::num_vertices(boostgraph);

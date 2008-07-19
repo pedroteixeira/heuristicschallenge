@@ -23,9 +23,6 @@ public:
 	int find_cost();
 	void find_mst_tree();
 	void exchange_key_path();
-	void insert_steiner_node(Vertex);
-	void remove_steiner_node(Vertex);
-	std::pair<Vertex, int>  node_based_search();
 	static void generate_chins_solution(SteinerSolution&);
 
 private:

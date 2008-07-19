@@ -18,8 +18,9 @@ public:
 	int E; //number of edges
 	Graph graph;
 	std::vector<Vertex> terminals;
-	std::map<Vertex, std::vector<Vertex> > distances_from_terminal;
-	std::map<Vertex, std::vector<Vertex> > parents_from_terminal;
+	std::map<int, VertexInfo> vertices_info;
+	std::map<Vertex, DistanceMap > distances_from_terminal;
+	std::map<Vertex, PredecessorMap > parents_from_terminal;
 	Steiner(std::string);
 	Steiner();
 

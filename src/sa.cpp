@@ -57,10 +57,9 @@ void SaSteiner::run() {
 			//copy solution
 			new_solution = SteinerSolution(solution);
 
-			//node-based neighborhood search
-			pair<Vertex, int> search = new_solution.node_based_search();
+			//key-path based neighborhood search
 
-			new_energy = search.second; //new_solution.find_cost();
+			new_energy = new_solution.find_cost();
 
 			delta = new_energy - energy;
 
