@@ -10,3 +10,13 @@ critical nodes as its end points and each intermediate node is a non-critical no
 
 A steiner tree can be considered to be a minimum spanning tree with critical nodes as
 vertices and key paths as edges. 
+
+
+neighborhood:
+
+* node-based  (remove/insert steiner nodes)
+* key-path based
+
+ideas:
+
+* path_relinking (elite solutions) - artigo Ribeiro e Uchoa

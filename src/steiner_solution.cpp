@@ -20,31 +20,59 @@
 #include "headers/steiner_solution.hpp"
 using namespace std;
 
-void SteinerSolution::insert_steiner_node() {
 
-	assert(out_vertices.size() > 0);
+pair<Vertex, int> SteinerSolution::node_based_search() {
 
-	boost::uniform_int<> distrib(0, out_vertices.size()-1);
-	boost::variate_generator<boost::mt19937&, boost::uniform_int<> > rand_gen(rng, distrib);
-	size_t random_index = rand_gen();
+	//TODO: think harder about data structures
+	vector<Vertex> tmp_vertices;
+	foreach(Vertex v, out_vertices)
+		tmp_vertices.push_back(v);
 
-	assert(random_index < out_vertices.size() && random_index >= 0);
+	random_shuffle(tmp_vertices.begin(), tmp_vertices.end());
 
-	Vertex vertex = out_vertices[random_index];
-	out_vertices.erase(out_vertices.begin() + random_index);
+	int best_cost = INT_MAX, cost;
+	Vertex best_vertex;
+	foreach(Vertex v, tmp_vertices) {
+		insert_steiner_node(v);
+		cost = find_cost();
+		if(cost < best_cost) {
+			best_cost = cost;
+			best_vertex = v;
+		}
 
-	cout << "inserting new vertex " << vertex << endl;
+		remove_steiner_node(v);
+	}
 
-	//add edges to this graph
-	boost::graph_traits<Graph>::adjacency_iterator vi, vi_end;
-	boost::tie(vi, vi_end) = boost::adjacent_vertices(vertex, instance.graph);
+	insert_steiner_node(best_vertex);
+
+	return pair<Vertex, int>(best_vertex, best_cost);
+}
+
+void SteinerSolution::remove_steiner_node(Vertex v) {
+
+	//add back
+	out_vertices.push_back(v);
+
+	boost::remove_vertex(v, graph);
+
+	update_candidates_out_vertices(v);
+
+}
+
+void SteinerSolution::insert_steiner_node(Vertex vertex) {
+
+	//remove from candidate list
+	out_vertices.remove(vertex);
+
+	//add new edges (from original graph) to this graph
+	boost::graph_traits<BoostGraph>::adjacency_iterator vi, vi_end;
+	boost::tie(vi, vi_end) = boost::adjacent_vertices(vertex, instance.graph.boostgraph);
 
 	for (; vi != vi_end; ++vi) {
-
 		Vertex v = (*vi);
 
-		//only add if it's connected to solution tree TODO: should do dijkstra to add more nodes?
-		if (v < boost::num_vertices(graph) && boost::out_degree(v, graph) > 0) {
+		//only add if it's connected to solution tree (at least two edges)
+		if (v < graph.num_vertices() && boost::out_degree(v, graph.boostgraph) > 0) {
 
 			//get weight from original graph
 			Edge original_edge;
@@ -52,21 +80,71 @@ void SteinerSolution::insert_steiner_node() {
 			boost::tie(original_edge, found) = boost::edge(vertex, v, instance.graph);
 			assert(found);
 
-			//add to solution graph only if necessary
+			//add edges from new vertex to solution graph (only if necessary)
 			Edge e;
 			boost::tie(e, found) = boost::edge(vertex, v, graph);
 			if (!found) {
-				cout << "adding edge to solution of weight " << instance.graph[original_edge].weight
-						<< endl;
+				cout << "adding edge to solution of weight " << instance.graph[original_edge].weight << endl;
 				boost::add_edge(vertex, v, instance.graph[original_edge], graph);
 			}
-
 		}
-
 	}
 
-	cout << "test " << endl;
+	update_candidates_out_vertices(vertex);
+
+	cout << "inserting new vertex " << vertex << " with degee " << boost::degree(vertex, graph)
+			<< endl;
+
 	find_mst_tree();
+}
+
+void SteinerSolution::update_candidates_out_vertices(Vertex v) {
+
+	boost::graph_traits<Graph>::adjacency_iterator ni, ni_end;
+	boost::tie(ni, ni_end) = boost::adjacent_vertices(v, instance.graph);
+	for (; ni != ni_end; ++ni) {
+		if (check_candidate_for_out_vertex(*ni)) {
+			out_vertices.push_back(*ni);
+		} else {
+			out_vertices.remove(*ni);
+		}
+	}
+}
+
+bool SteinerSolution::check_candidate_for_out_vertex(Vertex v) {
+
+	bool is_disconnected = (boost::degree(v, graph) == 0);
+
+	int neighboors_connected = 0;
+	boost::graph_traits<Graph>::adjacency_iterator ni, ni_end;
+	boost::tie(ni, ni_end) = boost::adjacent_vertices(v, instance.graph);
+	for (; ni != ni_end; ++ni) {
+
+		if (*ni < boost::num_vertices(graph) &&  boost::degree(*ni, graph) > 0)
+			neighboors_connected++;
+	}
+
+	if (is_disconnected && neighboors_connected > 1) {
+		return true;
+	}
+
+	return false;
+}
+
+void SteinerSolution::build_candidates_out_vertices() {
+
+	out_vertices.clear();
+
+	//select those nodes when added would have edges to connect to solution
+	boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
+	boost::tie(vi, vi_end) = boost::vertices(graph);
+	for (; vi != vi_end; ++vi) {
+		if (check_candidate_for_out_vertex(*vi)) {
+			out_vertices.push_back(*vi);
+		}
+	}
+
+	cout << "built " << out_vertices.size() << " candidates for out verticex." << endl;
 
 }
 
@@ -77,30 +155,45 @@ void SteinerSolution::find_mst_tree() {
 			&EdgeInfo::weight, graph)));
 
 	//compact
+	int edges_removed = 0;
+
 	for (size_t i = 0; i < tree.size(); i++) {
 		Edge e = tree[i];
 
 		Vertex u = boost::source(e, graph);
 		Vertex v = boost::target(e, graph);
 
-		if ((boost::degree(u, graph) == 1 && find(instance.terminals.begin(),
-				instance.terminals.end(), u) == instance.terminals.end()) || (boost::degree(v, graph)
-				== 1 && find(instance.terminals.begin(), instance.terminals.end(), v)
-				== instance.terminals.end())) {
+		bool is_u_lonely = (boost::degree(u, graph) == 1 && find(instance.terminals.begin(),
+				instance.terminals.end(), u) == instance.terminals.end());
+		bool is_v_lonely = (boost::degree(v, graph) == 1 && find(instance.terminals.begin(),
+				instance.terminals.end(), v) == instance.terminals.end());
 
-			cout << "removing 1-degree non-terminal vertex" << endl;
-			tree.erase(tree.begin() + i);
-
+		//removing 1-degree non-terminal nodes
+		if (is_u_lonely || is_v_lonely) {
+			tree.erase(tree.begin() + i);  //TODO: consider switching from vector to list
+			i--;
 			boost::remove_edge(e, graph);
+			edges_removed++;
 		}
+
+		if (is_u_lonely)
+			boost::remove_vertex(u, graph);
+
+		if (is_v_lonely)
+			boost::remove_vertex(v, graph);
+
+
 	}
+
+	if (edges_removed > 0)
+		cout << edges_removed << " edges lonely removed from solution. " << endl;
 
 }
 
 void SteinerSolution::exchange_key_path() {
 	//classify nodes
 	//degree > 2 or termina = critical
-	Edge e = boost::random_edge(graph, rng);
+	Edge e = boost::random_edge(graph, instance.rng);
 	Vertex u, v;
 	boost::tie(u, v) = boost::incident(e, graph);
 
@@ -124,7 +217,7 @@ void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 	copy(solution.instance.terminals.begin(), solution.instance.terminals.end(),
 			terminals_left.begin());
 
-	assert(terminals_left.size() > 0);
+	assert(terminals_left.size()> 0);
 
 	//pick initial terminal
 	int t0 = terminals_left.front();
@@ -185,10 +278,7 @@ void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 	}
 
 	//find MST on sub_graph
-	solution.tree.clear();
-	boost::kruskal_minimum_spanning_tree(solution.graph, back_inserter(solution.tree),
-			boost::weight_map(boost::get(&EdgeInfo::weight, solution.graph)));
-
+	solution.find_mst_tree();
 }
 
 /* constructors */
@@ -222,14 +312,7 @@ SteinerSolution::SteinerSolution(const SteinerSolution& solution) {
 
 void SteinerSolution::init() {
 
-	boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
-	boost::tie(vi, vi_end) = boost::vertices(graph);
-
-	for (; vi != vi_end; ++vi) {
-		if (boost::degree(*vi, graph) == 0) {
-			out_vertices.push_back(*vi);
-		}
-	}
+	build_candidates_out_vertices();
 
 }
 

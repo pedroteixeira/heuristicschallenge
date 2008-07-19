@@ -9,18 +9,21 @@
 #define STEINER_HPP_
 
 #include "util.hpp"
+#include "graph.hpp"
+#include <boost/random.hpp>
 
 class Steiner {
 public:
 	int V; //number of vertices
 	int E; //number of edges
 	Graph graph;
-	std::vector<int> terminals;
-	std::map<int, std::vector<int> > distances_from_terminal;
-	std::map<int, std::vector<Vertex> > parents_from_terminal;
+	std::vector<Vertex> terminals;
+	std::map<Vertex, std::vector<Vertex> > distances_from_terminal;
+	std::map<Vertex, std::vector<Vertex> > parents_from_terminal;
 	Steiner(std::string);
 	Steiner();
-	~Steiner();
+
+	boost::mt19937 rng;
 
 private:
 

@@ -13,6 +13,8 @@ using namespace std;
 #include "headers/ant.hpp"
 #include "headers/sa.hpp"
 
+#include <boost/random.hpp>
+
 int main() {
 
 	const string steiner_1_path = "data/steiner-1-2353.stp"; //0.2 para < 2420, 0.5 para < 2390

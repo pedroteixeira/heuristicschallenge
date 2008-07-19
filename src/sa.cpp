@@ -29,7 +29,7 @@ void SaSteiner::run() {
 
 	//parameters
 	int max_outer_iterations = 5;
-	int max_inner_iterations = 500;
+	int max_inner_iterations = 10;
 	float temperature = 10 * (instance.V);
 	float lowest_temp = 0.0001;
 	float alpha = 0.995f;
@@ -44,34 +44,37 @@ void SaSteiner::run() {
 
 	cout << "initial energy: " << energy << endl;
 
-	//hold new solution
-	SteinerSolution new_solution(solution);
-	int new_energy = new_solution.find_cost();
-	assert(new_energy == energy);
-
 	//working variables
 	int outer_iterations = 0, k = 0, delta;
 	double p;
+	SteinerSolution new_solution;
+	int new_energy;
 
 	while (outer_iterations < max_outer_iterations || temperature < lowest_temp) {
 
 		for (int i = 0; i < max_inner_iterations; i++) {
 
-			//neighborhood search key-path exchange
-			new_solution.insert_steiner_node();
-			new_energy = new_solution.find_cost();
+			//copy solution
+			new_solution = SteinerSolution(solution);
+
+			//node-based neighborhood search
+			pair<Vertex, int> search = new_solution.node_based_search();
+
+			new_energy = search.second; //new_solution.find_cost();
 
 			delta = new_energy - energy;
 
 			if (delta < 0) {
-				cout << "new energy: " << new_energy << endl;
+				cout << "new better energy: " << new_energy << endl;
+				solution = new_solution;
+				energy = new_energy;
 				record_best(new_solution, new_energy);
 			} else {
 				p = exp(-delta / temperature);
 
 				if (uniform() < p) {
-				//	memcpy(solution, new_solution, n * sizeof(int));
-				//	energy = new_energy;
+					solution = new_solution;
+					energy = new_energy;
 					record_best(new_solution, new_energy);
 					cout << "accepting worse new solution: " << new_energy << "| p = " << p << endl;
 				}

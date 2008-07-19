@@ -11,12 +11,10 @@
 #include <iostream>
 
 #include <boost/progress.hpp>
-#include <boost/multi_array.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/johnson_all_pairs_shortest.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
+
 
 #include "headers/steiner.hpp"
+#include "headers/graph.hpp"
 #include "headers/steiner_solution.hpp"
 using namespace std;
 
@@ -55,13 +53,12 @@ Steiner::Steiner(string path) {
 
 	boost::timer timer;
 	cout << "pre-calculating distances from all terminals..." << endl;
-	for (vector<int>::const_iterator i = terminals.begin(); i != terminals.end(); ++i) {
-		int terminal = (*i);
+	for (vector<Vertex>::const_iterator i = terminals.begin(); i != terminals.end(); ++i) {
+		Vertex terminal = (*i);
 		vector<Vertex> parents(V);
-		vector<int> distances(V);
+		vector<Vertex> distances(V);
 
-		boost::dijkstra_shortest_paths(graph, terminal, boost::weight_map(boost::get(&EdgeInfo::weight,
-				graph)).distance_map(&distances[0]).predecessor_map(&parents[0]));
+
 
 		distances_from_terminal[terminal] = distances;
 		parents_from_terminal[terminal] = parents;
@@ -85,14 +82,14 @@ inline void Steiner::read_graph_section(ifstream & in_data) {
 	for (int i = 0; i < E; i++) {
 		in_data.ignore(INT_MAX, ' ') >> node1 >> node2 >> weight;
 
-		//add an edge to the graph
+		//add an edge to the graph (indices are 0-based)
 		EdgeInfo edge;
 		edge.weight = weight;
-		boost::add_edge(node1 - 1, node2 - 1, edge, graph); //indices are 0-based
+		graph.add_edge(node1-1, node2-1, edge);
 	}
 
-	assert((int)boost::num_edges(graph) == E);
-	assert((int)boost::num_vertices(graph) == V);
+	assert(graph.num_edges() == E);
+	assert(graph.num_vertices() == V);
 }
 
 inline void Steiner::read_terminals_section(ifstream & in_data) {
@@ -104,8 +101,10 @@ inline void Steiner::read_terminals_section(ifstream & in_data) {
 
 	int terminal_node;
 	for (int i = 0; i < number_terminals; i++) {
-		in_data.ignore(INT_MAX, ' ') >> terminal_node; //indices are 0-based
-		terminals.push_back(terminal_node - 1);
+		in_data.ignore(INT_MAX, ' ') >> terminal_node;
+
+		//indices are 0-based
+		terminals.push_back( graph.get_vertex(terminal_node - 1) );
 	}
 
 	assert((int)terminals.size() == number_terminals);
@@ -116,10 +115,9 @@ inline void Steiner::read_coordinates_section(ifstream & in_data) {
 
 	//only for drawing
 	for (int i = 0; i < V; i++) { /* indices are 0-based */
-		in_data.ignore(INT_MAX, ' ').ignore(INT_MAX, ' ') >> graph[i].x >> graph[i].y;
+		VertexInfo info = graph.get_vertex_info(i);
+		in_data.ignore(INT_MAX, ' ').ignore(INT_MAX, ' ') >> info.x >> info.y;
 	}
 
 }
 
-Steiner::~Steiner() {
-}

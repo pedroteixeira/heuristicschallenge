@@ -9,7 +9,6 @@
 #define STEINER_SOLUTION_HPP_
 
 #include <boost/random.hpp>
-#include "util.hpp"
 #include "steiner.hpp"
 
 class SteinerSolution {
@@ -22,15 +21,19 @@ public:
 	Steiner instance;
 
 	int find_cost();
+	void find_mst_tree();
 	void exchange_key_path();
-	void insert_steiner_node();
+	void insert_steiner_node(Vertex);
+	void remove_steiner_node(Vertex);
+	std::pair<Vertex, int>  node_based_search();
 	static void generate_chins_solution(SteinerSolution&);
 
 private:
-	boost::mt19937 rng;
-	std::vector<Vertex> out_vertices;
+	std::list<Vertex> out_vertices;
+	void build_candidates_out_vertices();
+	void update_candidates_out_vertices(Vertex);
+	bool check_candidate_for_out_vertex(Vertex);
 	void init();
-	void find_mst_tree();
 };
 
 #endif /* STEINER_SOLUTION_HPP_ */
