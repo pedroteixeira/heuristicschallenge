@@ -10,7 +10,6 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bimap.hpp>
-#include <boost/graph/adjacency_list.hpp>
 
 struct VertexInfo {
 	int index;
@@ -44,24 +43,24 @@ class Graph {
 public:
 	Graph();
 	Graph(const Graph&);
+	Graph& operator = ( const Graph& source );
+
 	BoostGraph boostgraph;
 
 
 	int index_for_vertex(Vertex) const;
-	Vertex get_vertex(int);
-
-	bool contains_vertex(int);
-	bool contains_edge(int, int);
-
+	Vertex get_vertex(int) const;
+	bool contains_vertex(int) const;
+	bool contains_edge(int, int) const;
 	int get_edge_weight(Vertex, Vertex) const;
 	int get_edge_weight(Edge) const;
+	int num_vertices() const;
+	int num_edges() const;
 
 	void add_edge(int, int, int);
 	void remove_edge(Edge e);
 	void remove_vertex(Vertex v);
 
-	int num_vertices();
-	int num_edges();
 	void dijkstra_shortest_paths(int, DistanceMap&, PredecessorMap&);
 
 	void print();
@@ -73,6 +72,7 @@ private:
 	boost::property_map<BoostGraph, boost::edge_weight_t>::type weightmap;
 
 	void init();
+	void copy(const Graph&, Graph&);
 };
 
 #endif /* GRAPH_HPP_ */

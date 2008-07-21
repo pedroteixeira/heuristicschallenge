@@ -18,9 +18,9 @@ public:
 	void run();
 private:
 	Steiner* instance;
-	SteinerSolution solution;
-	int energy;
-	void record_best(const SteinerSolution&, const int&);
+	SteinerSolution best_solution;
+	int best_energy;
+	void record_best(SteinerSolution&, int);
 };
 
 

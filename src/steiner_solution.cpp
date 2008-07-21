@@ -27,43 +27,47 @@ void SteinerSolution::find_mst_tree() {
 
 	PredecessorMap p = boost::get(boost::vertex_predecessor, graph.boostgraph);
 
-	boost::prim_minimum_spanning_tree(graph.boostgraph,	p);
+	boost::prim_minimum_spanning_tree(graph.boostgraph, p);
 
+	foreach(Vertex v, boost::vertices(graph.boostgraph)) {
+		if(v != p[v])
+		tree.push_back(boost::edge(v, p[v], graph.boostgraph).first);
+	}
 
 	//compact
 	/*
-	int edges_removed = 0;
-	list<Edge>::iterator iter = tree.begin();
-	while (iter != tree.end()) {
-		Edge e = *iter;
+	 int edges_removed = 0;
+	 list<Edge>::iterator iter = tree.begin();
+	 while (iter != tree.end()) {
+	 Edge e = *iter;
 
-		Vertex u = boost::source(e, graph.boostgraph);
-		Vertex v = boost::target(e, graph.boostgraph);
+	 Vertex u = boost::source(e, graph.boostgraph);
+	 Vertex v = boost::target(e, graph.boostgraph);
 
-		bool is_u_lonely = boost::degree(u, graph.boostgraph) == 1 && !instance->is_terminal(u);
-		bool is_v_lonely = boost::degree(v, graph.boostgraph) == 1 && !instance->is_terminal(v);
+	 bool is_u_lonely = boost::degree(u, graph.boostgraph) == 1 && !instance->is_terminal(u);
+	 bool is_v_lonely = boost::degree(v, graph.boostgraph) == 1 && !instance->is_terminal(v);
 
-		//removing 1-degree non-terminal nodes
-		if (is_u_lonely || is_v_lonely) {
-			tree.erase(iter);
-			graph.remove_edge(e);
-			edges_removed++;
-		} else {
-			iter++;
-		}
+	 //removing 1-degree non-terminal nodes
+	 if (is_u_lonely || is_v_lonely) {
+	 tree.erase(iter);
+	 graph.remove_edge(e);
+	 edges_removed++;
+	 } else {
+	 iter++;
+	 }
 
 
-		if (is_u_lonely)
-			graph.remove_vertex(u);
+	 if (is_u_lonely)
+	 graph.remove_vertex(u);
 
-		if (is_v_lonely)
-			graph.remove_vertex(v);
-	}
+	 if (is_v_lonely)
+	 graph.remove_vertex(v);
+	 }
 
-	if (edges_removed > 0)
-		cout << edges_removed << " edges lonely removed from solution. " << endl;
+	 if (edges_removed > 0)
+	 cout << edges_removed << " edges lonely removed from solution. " << endl;
 
-	*/
+	 */
 
 	cout << "mst computed in " << timer.elapsed() << " seconds." << endl;
 }
@@ -86,41 +90,11 @@ int SteinerSolution::find_cost() {
 	return total;
 }
 
-struct show_events_visitor : boost::dijkstra_visitor<>
-{
-	Graph* graph;
-	show_events_visitor(Graph& g) {
-		graph = &g;
-	}
-
-  template<typename Vertex, typename Graph>
-  void discover_vertex(Vertex v, const Graph&)
-  {
-    std::cerr << "on_discover_vertex(" << v << ", " << graph->index_for_vertex(v) << ")\n";
-  }
-
-  template<typename Vertex, typename Graph>
-  void examine_vertex(Vertex v, const Graph&)
-  {
-  	std::cerr << "on_examine_vertex(" << v << ", " << graph->index_for_vertex(v) << ")\n";
-  }
-
-  template<typename Vertex, typename Graph>
-    void finish_vertex(Vertex v, const Graph&)
-    {
-    	std::cerr << "on_finish_vertex(" << v << ", " << graph->index_for_vertex(v) << ")\n";
-    }
-
-
-};
-
-
-
 void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 
 	//initialize list temp terminals (TODO: copy in random)
 	list<int> terminals_left(solution.instance->terminals.size());
-	copy(solution.instance->terminals.begin(), solution.instance->terminals.end(), terminals_left.begin());
+	std::copy(solution.instance->terminals.begin(), solution.instance->terminals.end(), terminals_left.begin());
 
 	assert(terminals_left.size()> 0);
 
@@ -169,7 +143,7 @@ void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 			//add all vertices in this path
 			bool not_in_solution = find(vertices_in_solution.begin(), vertices_in_solution.end(), parent)==vertices_in_solution.end();
 			if(not_in_solution)
-				vertices_in_solution.push_back(parent);
+			vertices_in_solution.push_back(parent);
 
 			last_parent = parent;
 			parent = solution.instance->parents_from_terminal[closest_terminal][parent];
@@ -201,9 +175,8 @@ void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 		}
 	}
 
-	cout << "chins subgraph created with " << solution.graph.num_edges() << " edges and " << solution.graph.num_vertices() << " vertices."  <<  endl;
+	cout << "chins subgraph created with " << solution.graph.num_edges() << " edges and " << solution.graph.num_vertices() << " vertices." << endl;
 	solution.graph.writedot("chins.dot");
-
 
 	//find MST on sub_graph
 	solution.find_mst_tree();
@@ -220,33 +193,51 @@ SteinerSolution::SteinerSolution(Steiner* steiner) {
 
 	instance = steiner;
 	init();
+
 }
 
 SteinerSolution::SteinerSolution(const SteinerSolution& solution) {
-	cout << "SteinerSolution::SteinerSolution(const SteinerSolution& solution)" << endl;
+	copy(solution, *this);
+}
 
-	instance = solution.instance;
-	graph = Graph(solution.graph);
+SteinerSolution& SteinerSolution::operator = ( const SteinerSolution& source ) {
+	if(this != &source) {
+		copy(source, *this);
+	}
+	return *this;
+}
 
-	//map edges from vector to the ones according to the new graph data structure
-	foreach(Edge original_edge, solution.tree) {
-		Edge e; bool found;
-		Vertex u = boost::source(original_edge, solution.graph.boostgraph);
-		Vertex v = boost::target(original_edge, solution.graph.boostgraph);
+void SteinerSolution::copy(const SteinerSolution& source, SteinerSolution& to) {
+	cout << "copying SteinerSolution" << endl;
 
-		Vertex nu = graph.get_vertex( solution.graph.index_for_vertex(u) );
-		Vertex nv = graph.get_vertex( solution.graph.index_for_vertex(v) );
+	to.instance = source.instance;
+	to.graph = source.graph; //deep copy
+	to.init();
 
-		boost::tie(e, found) = boost::edge(nu, nv, graph.boostgraph ); assert(found);
-		tree.push_back(e);
+	//map edges from solution tree to the ones according to the new graph data structure
+	for (list<Edge>::const_iterator iter = source.tree.begin(); iter != source.tree.end(); iter++) {
+
+		Vertex u = boost::source(*iter, source.graph.boostgraph);
+		Vertex v = boost::target(*iter, source.graph.boostgraph);
+
+		int iu = source.graph.index_for_vertex(u);
+		int iv = source.graph.index_for_vertex(v);
+		Vertex nu = to.graph.get_vertex(iu);
+		Vertex nv = to.graph.get_vertex(iv);
+
+		Edge e;
+		bool found;
+		boost::tie(e, found) = boost::edge(nu, nv, to.graph.boostgraph );
+		assert(found);
+		to.tree.push_back(e);
 	}
 
-	assert(tree.size() == solution.tree.size());
-	assert(boost::num_vertices(solution.graph.boostgraph) == boost::num_vertices(graph.boostgraph));
-	assert(boost::num_edges(solution.graph.boostgraph) == boost::num_edges(graph.boostgraph));
-	init();
+	assert(to.tree.size() == source.tree.size());
+	assert(boost::num_vertices(source.graph.boostgraph) == boost::num_vertices(to.graph.boostgraph));
+	assert(boost::num_edges(source.graph.boostgraph) == boost::num_edges(to.graph.boostgraph));
 }
 
 void SteinerSolution::init() {
+	tree.clear();
 }
 

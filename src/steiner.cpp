@@ -12,7 +12,6 @@
 
 #include <boost/progress.hpp>
 #include <boost/graph/graph_utility.hpp>
-#include <boost/graph/prim_minimum_spanning_tree.hpp>
 
 #include "headers/steiner.hpp"
 #include "headers/graph.hpp"

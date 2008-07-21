@@ -19,9 +19,10 @@ public:
 	SteinerSolution();
 	SteinerSolution(Steiner*);
 	SteinerSolution(const SteinerSolution&);
-	Graph graph;
+	SteinerSolution& operator = ( const SteinerSolution& source );
 	std::list<Edge> tree;
 	Steiner* instance;
+	Graph graph;
 
 	int find_cost();
 	void find_mst_tree();
@@ -30,6 +31,7 @@ public:
 
 private:
 	void init();
+	void copy(const SteinerSolution&, SteinerSolution&);
 };
 
 #endif /* STEINER_SOLUTION_HPP_ */

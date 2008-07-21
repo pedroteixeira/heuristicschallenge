@@ -20,24 +20,35 @@ Graph::Graph() {
 }
 
 Graph::Graph(const Graph& graph) {
-	cout << "Graph::Graph(const Graph& graph)" << endl;
-	init();
+	copy(graph, *this);
+}
 
-	//copy graph
-	boost::graph_traits<BoostGraph>::edge_iterator ei, ei_end;
-	for ( boost::tie(ei, ei_end) = boost::edges(graph.boostgraph); ei != ei_end; ++ei) {
+Graph& Graph::operator = ( const Graph& graph ) {
+	if(this != &graph)
+		copy(graph, *this);
+	return *this;
+}
 
-		const Vertex u = boost::source(*ei, graph.boostgraph);
-		const Vertex v = boost::target(*ei, graph.boostgraph);
+void Graph::copy(const Graph& from, Graph& to) {
+	cout << "copying graph" << endl;
+	to.init();
 
-		int iu = graph.index_bimap.right.at(u), iv = graph.index_bimap.right.at(v), weight = graph.get_edge_weight(u, v); //boost::get(graph.weightmap, *ei);
+	foreach(Edge e, boost::edges(from.boostgraph)) {
+		const Vertex u = boost::source(e, from.boostgraph);
+		const Vertex v = boost::target(e, from.boostgraph);
 
-		this->add_edge(iu, iv, weight);
+		to.add_edge(from.index_bimap.right.at(u),
+				from.index_bimap.right.at(v),
+				from.get_edge_weight(u, v));
 	}
 
+	assert(from.num_edges() == to.num_edges());
+	assert(from.num_vertices() == to.num_vertices());
 }
 
 void Graph::init() {
+	boostgraph = BoostGraph();
+	index_bimap.clear();
 	indexmap = boost::get(boost::vertex_index, boostgraph);
 	weightmap = boost::get(boost::edge_weight, boostgraph);
 }
@@ -61,7 +72,8 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 		u = iter->second;
 	else {
 		u = boost::add_vertex(boostgraph);
-		indexmap[u] = V++;  //keep indexmap contiguous
+		index_bimap.insert(MapPair(u_index, u));
+		indexmap[u] = V++; //keep indexmap contiguous
 	}
 
 	iter = index_bimap.left.find(v_index);
@@ -69,11 +81,9 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 		v = iter->second;
 	else {
 		v = boost::add_vertex(boostgraph);
+		index_bimap.insert(MapPair(v_index, v));
 		indexmap[v] = V++; //keep indexmap contiguous
 	}
-
-	index_bimap.insert(MapPair(u_index, u));
-	index_bimap.insert(MapPair(v_index, v));
 
 	Edge e;
 	bool inserted;
@@ -93,13 +103,13 @@ void Graph::remove_vertex(Vertex v) {
 	//keep indexmap contiguous
 	int index = 0;
 	boost::graph_traits<BoostGraph>::vertex_iterator vi, viend;
-	for (boost::tie(vi,viend) = boost::vertices(boostgraph); vi != viend; ++vi) {
+	for ( boost::tie(vi, viend) = boost::vertices(boostgraph); vi != viend; ++vi) {
 		indexmap[*vi] = index++;
 	}
 
 }
 
-Vertex Graph::get_vertex(int v) {
+Vertex Graph::get_vertex(int v) const {
 	return index_bimap.left.at(v);
 }
 
@@ -107,7 +117,7 @@ int Graph::index_for_vertex(Vertex v) const {
 	return index_bimap.right.at(v);
 }
 
-bool Graph::contains_edge(int ui, int vi) {
+bool Graph::contains_edge(int ui, int vi) const {
 	Vertex u, v;
 	BiMap::left_map::const_iterator iter = index_bimap.left.find(ui);
 	if (iter != index_bimap.left.end())
@@ -125,7 +135,7 @@ bool Graph::contains_edge(int ui, int vi) {
 
 }
 
-bool Graph::contains_vertex(int v) {
+bool Graph::contains_vertex(int v) const {
 	return index_bimap.left.find(v) != index_bimap.left.end();
 }
 
@@ -141,11 +151,11 @@ int Graph::get_edge_weight(Edge e) const {
 	return boost::get(weightmap, e);
 }
 
-int Graph::num_vertices() {
+int Graph::num_vertices() const {
 	return boost::num_vertices(boostgraph);
 }
 
-int Graph::num_edges() {
+int Graph::num_edges() const {
 	return boost::num_edges(boostgraph);
 }
 

@@ -13,6 +13,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/random.hpp>
 #include <boost/random.hpp>
+#include <boost/progress.hpp>
 
 #include "headers/steiner.hpp"
 #include "headers/steiner_solution.hpp"
@@ -34,49 +35,53 @@ void SaSteiner::run() {
 	float temperature = 10 * (instance->V);
 	float lowest_temp = 0.0001;
 	float alpha = 0.995f;
+	boost::timer t0;
 
 	boost::mt19937 rng;
 	boost::uniform_01<boost::mt19937> uniform(rng);
 
 	//initial solution & energy
-	solution = SteinerSolution(instance);
+	SteinerSolution solution(instance);
 	SteinerSolution::generate_chins_solution(solution);
-	energy = solution.find_cost();
+	int energy = solution.find_cost();
 
 	cout << "initial energy: " << energy << endl;
 
 	//working variables
 	int outer_iterations = 0, k = 0, delta;
 	double p;
-	SteinerSolution new_solution;
-	int new_energy;
 
-	while (outer_iterations < max_outer_iterations || temperature < lowest_temp) {
+	while (outer_iterations < max_outer_iterations && temperature > lowest_temp) {
 
 		for (int i = 0; i < max_inner_iterations; i++) {
 
 			//copy solution
-			new_solution = SteinerSolution(solution);
+			SteinerSolution new_solution(solution);
 
 			//key-path based neighborhood search
-
-			new_energy = new_solution.find_cost();
+			int new_energy = new_solution.find_cost();
 
 			delta = new_energy - energy;
 
 			if (delta < 0) {
 				cout << "new better energy: " << new_energy << endl;
+
 				solution = new_solution;
 				energy = new_energy;
 				record_best(new_solution, new_energy);
+
 			} else {
 				p = exp(-delta / temperature);
 
 				if (uniform() < p) {
+					cout << "accepting worse/same new solution: " << new_energy << "| p = " << p << endl;
+
 					solution = new_solution;
 					energy = new_energy;
 					record_best(new_solution, new_energy);
-					cout << "accepting worse new solution: " << new_energy << "| p = " << p << endl;
+				}
+				else {
+					//keep solution
 				}
 			}
 
@@ -87,17 +92,18 @@ void SaSteiner::run() {
 		outer_iterations++;
 	}
 
-	cout << "simulation finished: " << k << " total iterations." << endl;
+	cout << "simulation finished: " << k << " total iterations in " << t0.elapsed() << " seconds." << endl;
 }
 
-void SaSteiner::record_best(const SteinerSolution& new_solution, const int& new_energy) {
-	if(new_energy < energy) {
-		energy = new_energy;
-		solution = SteinerSolution(new_solution);
-		cout << "!! new best at " << energy << endl;
+void SaSteiner::record_best(SteinerSolution& new_solution, int new_energy) {
+	if(new_energy < best_energy) {
+		best_energy = new_energy;
+		best_solution = new_solution; //deep copy
+		cout << "!! new best at " << best_energy << endl;
 	}
 }
 
 
 SaSteiner::~SaSteiner() {
+	delete instance;
 }
