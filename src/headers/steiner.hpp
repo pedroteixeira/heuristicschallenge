@@ -17,12 +17,15 @@ public:
 	int V; //number of vertices
 	int E; //number of edges
 	Graph graph;
-	std::vector<Vertex> terminals;
+	std::vector<int> terminals;
 	std::map<int, VertexInfo> vertices_info;
-	std::map<Vertex, DistanceMap > distances_from_terminal;
-	std::map<Vertex, PredecessorMap > parents_from_terminal;
-	Steiner(std::string);
+	std::map<int, std::vector<int> > distances_from_terminal;
+	std::map<int, std::vector<int> > parents_from_terminal;
+	bool is_terminal(int v);
+	bool is_terminal(Vertex v);
 	Steiner();
+	Steiner(const Steiner&);
+	Steiner(std::string);
 
 	boost::mt19937 rng;
 

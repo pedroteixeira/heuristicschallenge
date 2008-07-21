@@ -17,7 +17,7 @@ public:
 	~SaSteiner();
 	void run();
 private:
-	Steiner instance;
+	Steiner* instance;
 	SteinerSolution solution;
 	int energy;
 	void record_best(const SteinerSolution&, const int&);

@@ -8,17 +8,20 @@
 #ifndef STEINER_SOLUTION_HPP_
 #define STEINER_SOLUTION_HPP_
 
+#define BOOST_RELAXED_HEAP_DEBUG 3
+#define BOOST_GRAPH_DIJKSTRA_TESTING 1
+
 #include <boost/random.hpp>
 #include "steiner.hpp"
 
 class SteinerSolution {
 public:
 	SteinerSolution();
-	SteinerSolution(const Steiner&);
+	SteinerSolution(Steiner*);
 	SteinerSolution(const SteinerSolution&);
 	Graph graph;
-	std::vector<Edge> tree;
-	Steiner instance;
+	std::list<Edge> tree;
+	Steiner* instance;
 
 	int find_cost();
 	void find_mst_tree();
@@ -26,10 +29,6 @@ public:
 	static void generate_chins_solution(SteinerSolution&);
 
 private:
-	std::list<Vertex> out_vertices;
-	void build_candidates_out_vertices();
-	void update_candidates_out_vertices(Vertex);
-	bool check_candidate_for_out_vertex(Vertex);
 	void init();
 };
 

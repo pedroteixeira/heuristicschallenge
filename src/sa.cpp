@@ -11,6 +11,7 @@
 
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/random.hpp>
 #include <boost/random.hpp>
 
 #include "headers/steiner.hpp"
@@ -20,9 +21,9 @@
 using namespace std;
 
 SaSteiner::SaSteiner(string instance_path) {
-	instance = Steiner(instance_path);
+	instance = new Steiner(instance_path);
 
-	//pre process
+	//TODO: pre process
 }
 
 void SaSteiner::run() {
@@ -30,7 +31,7 @@ void SaSteiner::run() {
 	//parameters
 	int max_outer_iterations = 5;
 	int max_inner_iterations = 10;
-	float temperature = 10 * (instance.V);
+	float temperature = 10 * (instance->V);
 	float lowest_temp = 0.0001;
 	float alpha = 0.995f;
 
