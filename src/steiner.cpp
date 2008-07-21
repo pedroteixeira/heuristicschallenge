@@ -18,10 +18,6 @@
 #include "headers/steiner_solution.hpp"
 using namespace std;
 
-Steiner::Steiner() {
-	cout << "Steiner::Steiner()" << endl;
-	//TODO:
-}
 
 Steiner::Steiner(const Steiner& steiner) {
 	cout << "Steiner::Steiner(const Steiner& steiner)" << endl;
@@ -132,11 +128,7 @@ inline void Steiner::read_coordinates_section(ifstream & in_data) {
 }
 
 bool Steiner::is_terminal(int v) {
-	return find(terminals.begin(), terminals.end(), v) != terminals.end();
+	return find(terminals.begin(), terminals.end(), v) != terminals.end(); //make it O(1)
 }
 
-bool Steiner::is_terminal(Vertex v) {
-	return is_terminal(graph.index_for_vertex(v));
-
-}
 

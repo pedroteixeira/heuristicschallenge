@@ -62,6 +62,7 @@ public:
 	void remove_vertex(Vertex v);
 
 	void dijkstra_shortest_paths(int, DistanceMap&, PredecessorMap&);
+	void dijkstra_shortest_paths(Vertex, DistanceMap&, PredecessorMap&);
 
 	void print();
 	void writedot(std::string);

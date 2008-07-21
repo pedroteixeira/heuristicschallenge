@@ -25,13 +25,14 @@ public:
 	Graph graph;
 
 	int find_cost();
-	void find_mst_tree();
 	void exchange_key_path();
 	static void generate_chins_solution(SteinerSolution&);
 
 private:
 	void init();
 	void copy(const SteinerSolution&, SteinerSolution&);
+
+	void find_mst_tree();
 };
 
 #endif /* STEINER_SOLUTION_HPP_ */

@@ -61,6 +61,10 @@ void Graph::dijkstra_shortest_paths(int from, DistanceMap& d, PredecessorMap& p)
 	boost::dijkstra_shortest_paths(boostgraph, index_bimap.left.at(from), boost::distance_map(d).predecessor_map(p));
 }
 
+void Graph::dijkstra_shortest_paths(Vertex from, DistanceMap& d, PredecessorMap& p) {
+	dijkstra_shortest_paths(index_for_vertex(from), d, p);
+}
+
 void Graph::add_edge(int u_index, int v_index, int weight) {
 
 	Vertex u, v;
@@ -174,12 +178,26 @@ void Graph::print() {
 
 }
 
+
+
+class custom_label_writer {
+  public:
+  	custom_label_writer(Graph& _graph) : _graph(&_graph) {}
+    template <class VertexOrEdge>
+    void operator()(std::ostream& out, const VertexOrEdge& v) const {
+      out << "[label=\"" << _graph->index_for_vertex(v) << "\"]";
+    }
+  private:
+    Graph* _graph;
+  };
+
 void Graph::writedot(string path) {
 	boost::dynamic_properties dp;
 	dp.property("id", indexmap);
 	dp.property("weight", weightmap);
 	ofstream out(path.c_str());
-	boost::write_graphviz(out, boostgraph, dp, string("id"));
+	//boost::write_graphviz(out, boostgraph, dp, string("id"));
+	boost::write_graphviz(out, boostgraph, custom_label_writer(*this));
 }
 /*
 

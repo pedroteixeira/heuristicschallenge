@@ -30,8 +30,8 @@ SaSteiner::SaSteiner(string instance_path) {
 void SaSteiner::run() {
 
 	//parameters
-	int max_outer_iterations = 5;
-	int max_inner_iterations = 10;
+	int max_outer_iterations = 2;
+	int max_inner_iterations = 1;
 	float temperature = 10 * (instance->V);
 	float lowest_temp = 0.0001;
 	float alpha = 0.995f;
@@ -44,6 +44,8 @@ void SaSteiner::run() {
 	SteinerSolution solution(instance);
 	SteinerSolution::generate_chins_solution(solution);
 	int energy = solution.find_cost();
+
+	solution.graph.writedot("chins.dot");
 
 	cout << "initial energy: " << energy << endl;
 
@@ -59,6 +61,8 @@ void SaSteiner::run() {
 			SteinerSolution new_solution(solution);
 
 			//key-path based neighborhood search
+			solution.exchange_key_path();
+
 			int new_energy = new_solution.find_cost();
 
 			delta = new_energy - energy;

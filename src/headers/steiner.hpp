@@ -22,8 +22,6 @@ public:
 	std::map<int, std::vector<int> > distances_from_terminal;
 	std::map<int, std::vector<int> > parents_from_terminal;
 	bool is_terminal(int v);
-	bool is_terminal(Vertex v);
-	Steiner();
 	Steiner(const Steiner&);
 	Steiner(std::string);
 
