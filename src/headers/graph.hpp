@@ -8,6 +8,11 @@
 #ifndef GRAPH_HPP_
 #define GRAPH_HPP_
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/random_access_index.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/identity.hpp>
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bimap.hpp>
 
@@ -38,6 +43,16 @@ typedef boost::property_map<BoostGraph, boost::vertex_predecessor_t>::type Prede
 
 typedef boost::bimap< int, Vertex> BiMap;
 typedef BiMap::value_type MapPair;
+
+
+typedef boost::multi_index::multi_index_container<Vertex,
+	boost::multi_index::indexed_by<
+	boost::multi_index::random_access<>,
+	boost::multi_index::hashed_unique<boost::multi_index::identity<Vertex> >
+	>
+	> VertexSet;
+
+typedef VertexSet::nth_index<1>::type VertexHashSet;
 
 class Graph {
 public:

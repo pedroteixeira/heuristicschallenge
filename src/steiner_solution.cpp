@@ -8,13 +8,10 @@
 #include <assert.h>
 #include <math.h>
 #include <iostream>
-
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/random_access_index.hpp>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/identity.hpp>
+#include <stack>
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/graph_utility.hpp>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
@@ -88,77 +85,113 @@ void SteinerSolution::find_mst_tree() {
 	cout << "mst computed and graph compacted in " << timer.elapsed() << " seconds." << endl;
 }
 
+class dfs_time_visitor: public boost::default_dfs_visitor {
+
+public:
+	dfs_time_visitor(Graph& g, VertexSet& cs, list<list<Vertex> >& paths) :
+		graph(g), critical_set(cs), critical_hashed(cs.get<1> ()), on_key_path(false), keypaths(paths) {
+	}
+
+	void discover_vertex(Vertex u, const BoostGraph & g) {
+
+		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
+
+		if (is_critical) {
+			if (on_key_path) {
+				//end current path
+				path.push_back(u);
+				list<Vertex> tmp = path;
+				keypaths.push_back(tmp);
+				path.clear();
+			} else {
+				//start new from here
+				on_key_path = true;
+			}
+			//add key node to current path
+			path.push_back(u);
+			critical_stack.push(u);
+		} else if (on_key_path) {
+			//add seiner node to current path
+			path.push_back(u);
+		}
+	}
+
+	void examine_edge(Edge e, const BoostGraph & g) {
+	}
+
+	void finish_vertex(Vertex u, const BoostGraph & g) {
+		//update track
+		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
+		if (is_critical) {
+			path.clear();
+			//throw away finished
+			if (!critical_stack.empty())
+				critical_stack.pop();
+			//and restore previous critical (to deal with branches)
+			if (!critical_stack.empty()) {
+				path.push_back(critical_stack.top());
+				on_key_path = true;
+			} else {
+				on_key_path = false; //I guess only necessary if graph is disconnected
+			}
+		}
+	}
+
+	Graph& graph;
+	VertexSet& critical_set;
+	VertexHashSet& critical_hashed;
+	list<Vertex> path;
+	list<list<Vertex> >& keypaths;
+	stack<Vertex> critical_stack;
+	bool on_key_path;
+};
+
 void SteinerSolution::exchange_key_path() {
+
+	VertexSet critical_set;
+
+	//TODO: the following can be cached or done in pre-processing
 	//classify nodes
-
-	typedef boost::multi_index::multi_index_container<Vertex,
-	boost::multi_index::indexed_by<
-	boost::multi_index::random_access<>,
-	boost::multi_index::hashed_unique<boost::multi_index::identity<Vertex> >
-	>
-	> vertex_set;
-
-	typedef vertex_set::nth_index<1>::type vertex_set_hash;
-
-	vertex_set critical_set;
-
 	foreach(Vertex u, boost::vertices(graph.boostgraph)) {
 		int iu = graph.index_for_vertex(u);
-
-		bool is_critical = boost::degree(u, graph.boostgraph)> 2 || instance->is_terminal(iu);
-
-		if(is_critical)
-		critical_set.push_back(u);
+		if(boost::degree(u, graph.boostgraph)> 2 || instance->is_terminal(iu)) //is critical
+			critical_set.push_back(u);
 	}
-
-	cout << critical_set.size() << " critical nodes found. \n";
 	assert(critical_set.size()> 0);
+	cout << critical_set.size() << " critical nodes found. \n";
 
-	vertex_set_hash& critical_hashed = critical_set.get<1>();
+	//build all key paths
+	list< list<Vertex> > keypaths;
+	dfs_time_visitor vis(graph, critical_set, keypaths);
 
-	//find key-path //key-path = only critical nodes at ends
-	//TODO: choose at random (build random ints for indices)
-	for(size_t i = 0; i<critical_set.size(); i++) {
-		Vertex initial_critical = *(critical_set.get<0>().begin()+i);
+	boost::depth_first_search(graph.boostgraph, boost::visitor(vis));
 
-		Vertex parent = initial_critical, next_node = initial_critical, previous_node = initial_critical;
-		vector<Edge> key_path;
-		int distance_current_path = 0;
+	cout << keypaths.size() << " key-node paths built: \n";
+	foreach(list<Vertex> vertices, keypaths) {
+		int path_weight = 0; Vertex previous;
+		for(list<Vertex>::iterator iter = vertices.begin(); iter != vertices.end(); iter++) {
+			if(iter != vertices.begin()) {
+				Edge e; bool found;
+				boost::tie(e, found) = boost::edge(previous, *iter, graph.boostgraph);
+				assert(found);
 
-		do {
-			parent = next_node;
-
-			cout << graph.index_for_vertex(next_node) << ", ";
-
-			//choose neighbor TODO: random
-			foreach(Vertex neighbor, boost::adjacent_vertices(parent, graph.boostgraph)) {
-				if(neighbor != previous_node ) {
-					next_node = neighbor;
-
-					Edge e; bool found;
-					boost::tie(e, found) = boost::edge(parent, neighbor, graph.boostgraph); assert(found);
-					key_path.push_back(e);
-
-					distance_current_path += graph.get_edge_weight(e);
-
-					break;
-				}
+				path_weight += graph.get_edge_weight(e);
 			}
-			previous_node = parent;
+			previous = *iter;
+			//cout << graph.index_for_vertex(*iter) << " - ";
+		}
+		//cout << "[" << path_weight << "] \n";
 
-		}while(next_node != previous_node && critical_hashed.find(next_node) == critical_hashed.end()); //stop at next critical
-		cout << graph.index_for_vertex(next_node) << ", \n";
-
-		assert(key_path.size()> 0);
-
+		//TODO: cache distances
 		DistanceMap distances;
 		PredecessorMap parents;
+		graph.dijkstra_shortest_paths(vertices.front(), distances, parents);
+		int best_distance = distances[vertices.back()];
 
-		graph.dijkstra_shortest_paths(initial_critical, distances, parents);
-
-		cout << "current distance is " << distance_current_path << " and best distance " << distances[next_node] << "\n";
+		if(best_distance < path_weight) {
+			cout << "best distance is " << best_distance << " over " << path_weight << ".\n";
+		}
 	}
-
 	cout << endl;
 
 }
@@ -288,7 +321,7 @@ SteinerSolution& SteinerSolution::operator = ( const SteinerSolution& source ) {
 }
 
 void SteinerSolution::copy(const SteinerSolution& source, SteinerSolution& to) {
-	cout << "copying SteinerSolution" << endl;
+	//cout << "copying SteinerSolution" << endl;
 
 	to.instance = source.instance;
 	to.graph = source.graph; //deep copy

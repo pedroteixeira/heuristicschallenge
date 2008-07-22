@@ -30,7 +30,7 @@ SaSteiner::SaSteiner(string instance_path) {
 void SaSteiner::run() {
 
 	//parameters
-	int max_outer_iterations = 2;
+	int max_outer_iterations = 10;
 	int max_inner_iterations = 1;
 	float temperature = 10 * (instance->V);
 	float lowest_temp = 0.0001;

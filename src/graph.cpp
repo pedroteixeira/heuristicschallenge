@@ -30,7 +30,7 @@ Graph& Graph::operator = ( const Graph& graph ) {
 }
 
 void Graph::copy(const Graph& from, Graph& to) {
-	cout << "copying graph" << endl;
+	//cout << "copying graph" << endl;
 	to.init();
 
 	foreach(Edge e, boost::edges(from.boostgraph)) {
