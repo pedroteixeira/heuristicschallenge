@@ -17,6 +17,7 @@
 
 #include "headers/steiner.hpp"
 #include "headers/steiner_solution.hpp"
+#include "headers/steiner_nodesearch.hpp"
 #include "headers/sa.hpp"
 
 using namespace std;
@@ -40,9 +41,12 @@ void SaSteiner::run() {
 	boost::mt19937 rng;
 	boost::uniform_01<boost::mt19937> uniform(rng);
 
-	//initial solution & energy
+	//initialize solution
 	SteinerSolution solution(instance);
 	SteinerSolution::generate_chins_solution(solution);
+	solution.build_candidates_out_vertices();
+
+	//initial energy
 	int energy = solution.find_cost();
 
 	solution.graph.writedot("chins.dot");
@@ -61,7 +65,9 @@ void SaSteiner::run() {
 			SteinerSolution new_solution(solution);
 
 			//key-path based neighborhood search
-			solution.exchange_key_path();
+			pair<int, int> result = SteinerNodeLocalSearch::search(new_solution);
+
+			//solution.exchange_key_path();
 
 			int new_energy = new_solution.find_cost();
 
@@ -102,7 +108,9 @@ void SaSteiner::run() {
 void SaSteiner::record_best(SteinerSolution& new_solution, int new_energy) {
 	if(new_energy < best_energy) {
 		best_energy = new_energy;
-		best_solution = new_solution; //deep copy
+
+		SteinerSolution tmp = new_solution; //deep copy
+		best_solution = &tmp;
 		cout << "!! new best at " << best_energy << endl;
 	}
 }

@@ -71,10 +71,13 @@ public:
 	int get_edge_weight(Edge) const;
 	int num_vertices() const;
 	int num_edges() const;
+	int get_degree(int v) const;
+	int get_degree(Vertex v) const;
 
 	void add_edge(int, int, int);
 	void remove_edge(Edge e);
 	void remove_vertex(Vertex v);
+	void remove_vertex(int v);
 
 	void dijkstra_shortest_paths(int, DistanceMap&, PredecessorMap&);
 	void dijkstra_shortest_paths(Vertex, DistanceMap&, PredecessorMap&);

@@ -16,23 +16,31 @@
 
 class SteinerSolution {
 public:
-	SteinerSolution();
 	SteinerSolution(Steiner*);
 	SteinerSolution(const SteinerSolution&);
 	SteinerSolution& operator = ( const SteinerSolution& source );
 	std::list<Edge> tree;
 	Steiner* instance;
 	Graph graph;
+	std::list<int> out_vertices;
 
 	int find_cost();
 	void exchange_key_path();
+	void build_candidates_out_vertices();
+	void find_mst_tree();
+
 	static void generate_chins_solution(SteinerSolution&);
+
+	//'events'
+	void on_steiner_node_inserted(int);
+	void on_steiner_node_removed(int);
 
 private:
 	void init();
 	void copy(const SteinerSolution&, SteinerSolution&);
 
-	void find_mst_tree();
+	void update_candidates_out_vertices(int);
+	bool is_new_candidate_for_out_vertex(int);
 };
 
 #endif /* STEINER_SOLUTION_HPP_ */

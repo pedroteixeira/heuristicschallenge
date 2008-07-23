@@ -90,13 +90,24 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 	}
 
 	Edge e;
-	bool inserted;
-	boost::tie(e, inserted) = boost::add_edge(u, v, weight, boostgraph);
-	assert(inserted);
+	bool found;
+	//prevent parallel edges
+	boost::tie(e, found) = boost::edge(u, v, boostgraph);
+	if(found) {
+		cerr << "warning: adding already added edge\n";
+	} else {
+		bool inserted;
+		boost::tie(e, inserted) = boost::add_edge(u, v, weight, boostgraph);
+		assert(inserted);
+	}
 }
 
 void Graph::remove_edge(Edge e) {
 	boost::remove_edge(e, boostgraph);
+}
+
+void Graph::remove_vertex(int v) {
+	remove_vertex(get_vertex(v));
 }
 
 void Graph::remove_vertex(Vertex v) {
@@ -110,7 +121,14 @@ void Graph::remove_vertex(Vertex v) {
 	for ( boost::tie(vi, viend) = boost::vertices(boostgraph); vi != viend; ++vi) {
 		indexmap[*vi] = index++;
 	}
+}
 
+int Graph::get_degree(Vertex v) const {
+	return boost::degree(v, boostgraph);
+}
+
+int Graph::get_degree(int v) const {
+	return get_degree(get_vertex(v));
 }
 
 Vertex Graph::get_vertex(int v) const {

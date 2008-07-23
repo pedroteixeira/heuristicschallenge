@@ -38,6 +38,8 @@ void SteinerSolution::find_mst_tree() {
 	}
 
 	//eliminate all edges in graph that are not in tree (beware of invalidation of edges desccriptors)
+	//TODO: bad to elimated because it's our working structure (to enabled search, etc..)
+	/*
 	int edges_removed = 0;
 	boost::graph_traits<BoostGraph>::edge_iterator ei, ei_end, next;
 	boost::tie(ei, ei_end) = boost::edges(graph.boostgraph);
@@ -48,9 +50,10 @@ void SteinerSolution::find_mst_tree() {
 		}
 	}
 	cout << edges_removed << " edges eliminated from graph to match solution tree." << endl;
+	*/
 
 	//compact
-	edges_removed = 0;
+	int edges_removed = 0;
 	list<Edge>::iterator iter = tree.begin();
 	while (iter != tree.end()) {
 		Edge e = *iter;
@@ -66,21 +69,23 @@ void SteinerSolution::find_mst_tree() {
 		//removing 1-degree non-terminal nodes
 		if (is_u_lonely || is_v_lonely) {
 			tree.erase(iter);
-			graph.remove_edge(e);
+			//graph.remove_edge(e); TODO: Keep structure intact for now?
 			edges_removed++;
 		} else {
 			iter++;
 		}
 
+		/*
 		if (is_u_lonely)
-		graph.remove_vertex(u);
+			graph.remove_vertex(u);
 
 		if (is_v_lonely)
-		graph.remove_vertex(v);
+			graph.remove_vertex(v);
+			*/
 	}
 
 	if (edges_removed> 0)
-	cout << edges_removed << " edges lonely removed from solution. " << endl;
+	cout << edges_removed << " edges lonely removed from solution tree. " << endl;
 
 	cout << "mst computed and graph compacted in " << timer.elapsed() << " seconds." << endl;
 }
@@ -155,7 +160,7 @@ void SteinerSolution::exchange_key_path() {
 	foreach(Vertex u, boost::vertices(graph.boostgraph)) {
 		int iu = graph.index_for_vertex(u);
 		if(boost::degree(u, graph.boostgraph)> 2 || instance->is_terminal(iu)) //is critical
-			critical_set.push_back(u);
+		critical_set.push_back(u);
 	}
 	assert(critical_set.size()> 0);
 	cout << critical_set.size() << " critical nodes found. \n";
@@ -188,14 +193,94 @@ void SteinerSolution::exchange_key_path() {
 		graph.dijkstra_shortest_paths(vertices.front(), distances, parents);
 		int best_distance = distances[vertices.back()];
 
+		//		Vertex parent = vertices.back(), last_parent = parent, first = vertices.front();
+		//		while(last_parent != first) {
+		//			cout << graph.index_for_vertex(parent) << " - ";
+		//			last_parent = parent;
+		//			parent = parents[parent];
+		//		}
+		//		cout << "\n";
+
 		if(best_distance < path_weight) {
-			cout << "best distance is " << best_distance << " over " << path_weight << ".\n";
+			cout << "best distance FOUND is " << best_distance << " over " << path_weight << ".\n";
 		}
 	}
+
+	//do exchange
+
 	cout << endl;
+}
+
+
+/**
+ * mantain out vertices
+ */
+bool SteinerSolution::is_new_candidate_for_out_vertex(int i) {
+
+	bool is_already_in_solution = graph.contains_vertex(i);
+	if(is_already_in_solution) //excludes terminals also
+		return false;
+
+	bool already_added_as_candidate = find(out_vertices.begin(), out_vertices.end(), i) != out_vertices.end(); //TODO: can make it O(1) with hashed index
+	if(already_added_as_candidate)
+		return false;
+
+	//check if it can connect to at least 2 neighboors in this solution
+	int neighboors_connected = 0;
+	foreach(Vertex n_in_original, boost::adjacent_vertices(instance->graph.get_vertex(i), instance->graph.boostgraph)) {
+
+		int index_n = instance->graph.index_for_vertex(n_in_original);
+		bool n_exists_in_solution = graph.contains_vertex(index_n);
+
+		if(n_exists_in_solution && boost::degree(graph.get_vertex(index_n), graph.boostgraph) > 0)
+			neighboors_connected++;
+	}
+
+	return neighboors_connected > 1;
+}
+
+
+void SteinerSolution::update_candidates_out_vertices(int i) {
+
+	foreach(Vertex n, boost::adjacent_vertices(instance->graph.get_vertex(i), instance->graph.boostgraph)) {
+		int index_n = instance->graph.index_for_vertex(n);
+		if (is_new_candidate_for_out_vertex(index_n)) {
+			out_vertices.push_back(index_n);
+		} else {
+			out_vertices.remove(index_n);
+		}
+	}
+}
+
+
+void SteinerSolution::build_candidates_out_vertices() {
+	out_vertices.clear();
+
+	//select those nodes when added would have edges to connect to solution
+	for(int i=0; i<instance->V; i++) {
+		if (is_new_candidate_for_out_vertex(i)) {
+			out_vertices.push_back(i);
+		}
+	}
+
+	cout << "built list of " << out_vertices.size() << " candidates for 'out vertices'." << endl;
+}
+
+
+void SteinerSolution::on_steiner_node_inserted(int i) {
+	out_vertices.remove(i);
+	update_candidates_out_vertices(i);
 
 }
 
+void SteinerSolution::on_steiner_node_removed(int i) {
+	out_vertices.push_back(i);
+	update_candidates_out_vertices(i);
+}
+
+/**
+ * Find cost of current solution.
+ */
 int SteinerSolution::find_cost() {
 	int total = 0;
 	foreach(Edge e, tree) {
@@ -204,10 +289,15 @@ int SteinerSolution::find_cost() {
 	return total;
 }
 
+
+
+/**
+ * Heuristics to generate good solution.
+ */
 void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 
 	//initialize list temp terminals (TODO: copy in random)
-	list<int> terminals_left(solution.instance->terminals.size());
+	list<int> terminals_left(solution.instance-> terminals.size());
 	std::copy(solution.instance->terminals.begin(), solution.instance->terminals.end(), terminals_left.begin());
 
 	assert(terminals_left.size()> 0);
@@ -252,7 +342,7 @@ void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 		//traverse shortest path from terminal
 		int parent = closest_vertex_in_tree, last_parent = closest_vertex_in_tree;
 		while(last_parent != closest_terminal) {
-			//cout << parent << " - ";
+			//cout << parent << "  ";
 
 			//add all vertices in this path
 			bool not_in_solution = find(vertices_in_solution.begin(), vertices_in_solution.end(), parent)==vertices_in_solution.end();
@@ -295,18 +385,16 @@ void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 	solution.find_mst_tree();
 }
 
-/* constructors */
-SteinerSolution::SteinerSolution() {
-	//TODO: understand alternative to value initialization
-	cout << "SteinerSolution::SteinerSolution()" << endl;
-}
+
+/**
+ * constructors
+ * */
 
 SteinerSolution::SteinerSolution(Steiner* steiner) {
 	cout << "SteinerSolution::SteinerSolution(Steiner* steiner)" << endl;
 
 	instance = steiner;
 	init();
-
 }
 
 SteinerSolution::SteinerSolution(const SteinerSolution& solution) {
@@ -324,10 +412,11 @@ void SteinerSolution::copy(const SteinerSolution& source, SteinerSolution& to) {
 	//cout << "copying SteinerSolution" << endl;
 
 	to.instance = source.instance;
+	to.out_vertices = source.out_vertices;
 	to.graph = source.graph; //deep copy
-	to.init();
 
 	//map edges from solution tree to the ones according to the new graph data structure
+	to.tree.clear();
 	for (list<Edge>::const_iterator iter = source.tree.begin(); iter != source.tree.end(); iter++) {
 
 		Vertex u = boost::source(*iter, source.graph.boostgraph);
@@ -351,6 +440,5 @@ void SteinerSolution::copy(const SteinerSolution& source, SteinerSolution& to) {
 }
 
 void SteinerSolution::init() {
-	tree.clear();
 }
 

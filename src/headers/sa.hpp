@@ -16,11 +16,13 @@ public:
 	SaSteiner(std::string);
 	~SaSteiner();
 	void run();
+
 private:
 	Steiner* instance;
-	SteinerSolution best_solution;
-	int best_energy;
 	void record_best(SteinerSolution&, int);
+
+	SteinerSolution* best_solution;
+	int best_energy;
 };
 
 
