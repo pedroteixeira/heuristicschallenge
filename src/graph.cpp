@@ -33,21 +33,29 @@ void Graph::copy(const Graph& from, Graph& to) {
 	//cout << "copying graph" << endl;
 	to.init();
 
-	foreach(Edge e, boost::edges(from.boostgraph)) {
-		const Vertex u = boost::source(e, from.boostgraph);
-		const Vertex v = boost::target(e, from.boostgraph);
+	assert( to.num_edges() == 0 );
+	assert( to.num_vertices() == 0 );
 
-		to.add_edge(from.index_bimap.right.at(u),
-				from.index_bimap.right.at(v),
-				from.get_edge_weight(u, v));
+	int edges_added = 0;
+	foreach(Edge e, boost::edges(from.boostgraph)) {
+		Vertex u = boost::source(e, from.boostgraph);
+		Vertex v = boost::target(e, from.boostgraph);
+
+		int u_index = from.index_bimap.right.at(u);
+		int v_index = from.index_bimap.right.at(v);
+		to.add_edge(u_index, v_index,	from.get_edge_weight(u, v));
+
+		//cout << u_index << " - " << v_index << "\n";
+		//assert( to.num_edges() == ++edges_added);
 	}
 
-	assert(from.num_edges() == to.num_edges());
+	cout << from.num_edges() << ", " << to.num_edges() << "\n";
 	assert(from.num_vertices() == to.num_vertices());
+	assert(from.num_edges() == to.num_edges());
 }
 
 void Graph::init() {
-	boostgraph = BoostGraph();
+	boostgraph.clear();
 	index_bimap.clear();
 	indexmap = boost::get(boost::vertex_index, boostgraph);
 	weightmap = boost::get(boost::edge_weight, boostgraph);
@@ -91,14 +99,16 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 
 	Edge e;
 	bool found;
-	//prevent parallel edges
+
+	//TODO: is it better to be explicit about parallel edges? (using setS implies overhead)
 	boost::tie(e, found) = boost::edge(u, v, boostgraph);
-	if(found) {
-		cerr << "warning: adding already added edge\n";
-	} else {
+
+	if(!found) {
 		bool inserted;
 		boost::tie(e, inserted) = boost::add_edge(u, v, weight, boostgraph);
 		assert(inserted);
+	} else {
+		cerr << "edge already added : " << u_index << ", " << v_index << "\n";
 	}
 }
 
@@ -111,9 +121,18 @@ void Graph::remove_vertex(int v) {
 }
 
 void Graph::remove_vertex(Vertex v) {
+
+	int _V = num_vertices();
+	int _E = num_edges();
+
+	boost::clear_vertex(v, boostgraph);
 	boost::remove_vertex(v, boostgraph);
 
+	int index_v = index_bimap.right.at(v);
 	index_bimap.right.erase(v);
+	index_bimap.left.erase(index_v);
+
+	assert( index_bimap.left.find(index_v) == index_bimap.left.end() );
 
 	//keep indexmap contiguous
 	int index = 0;

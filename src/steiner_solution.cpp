@@ -33,8 +33,12 @@ void SteinerSolution::find_mst_tree() {
 
 	//convert from parent map to list of edges
 	foreach(Vertex v, boost::vertices(graph.boostgraph)) {
-		if(v != p[v])
-		tree.push_back(boost::edge(v, p[v], graph.boostgraph).first);
+		if(v != p[v]) {
+			Edge e; bool found;
+			boost::tie(e, found) = boost::edge(p[v], v, graph.boostgraph);
+			assert(found);
+			tree.push_back(e);
+		}
 	}
 
 	//eliminate all edges in graph that are not in tree (beware of invalidation of edges desccriptors)
@@ -53,6 +57,7 @@ void SteinerSolution::find_mst_tree() {
 	*/
 
 	//compact
+	/*
 	int edges_removed = 0;
 	list<Edge>::iterator iter = tree.begin();
 	while (iter != tree.end()) {
@@ -75,17 +80,18 @@ void SteinerSolution::find_mst_tree() {
 			iter++;
 		}
 
-		/*
-		if (is_u_lonely)
-			graph.remove_vertex(u);
 
-		if (is_v_lonely)
-			graph.remove_vertex(v);
-			*/
+		//if (is_u_lonely)
+		//	graph.remove_vertex(u);
+
+		//if (is_v_lonely)
+		//	graph.remove_vertex(v);
+
 	}
 
 	if (edges_removed> 0)
 	cout << edges_removed << " edges lonely removed from solution tree. " << endl;
+	*/
 
 	cout << "mst computed and graph compacted in " << timer.elapsed() << " seconds." << endl;
 }

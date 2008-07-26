@@ -11,6 +11,7 @@
 
 using namespace std;
 
+
 pair<int, int> SteinerNodeLocalSearch::search(SteinerSolution& solution) {
 
 	assert(solution.out_vertices.size() > 0);
@@ -37,6 +38,7 @@ pair<int, int> SteinerNodeLocalSearch::search(SteinerSolution& solution) {
 
 	//keep best
 	insert_steiner_node(best_vertex, solution);
+	solution.find_mst_tree();
 
 	return pair<int, int> (best_vertex, best_cost);
 }
@@ -56,6 +58,7 @@ void SteinerNodeLocalSearch::insert_steiner_node(int i, SteinerSolution& solutio
 	Vertex v_original = solution.instance->graph.get_vertex(i);
 
 	//add new edges (from original graph) to this graph
+	bool at_least_one_edge_added = false;
 	foreach(Vertex n_original, boost::adjacent_vertices(v_original, solution.instance->graph.boostgraph)) {
 
 		int index_n_original = solution.instance->graph.index_for_vertex(n_original);
@@ -71,13 +74,14 @@ void SteinerNodeLocalSearch::insert_steiner_node(int i, SteinerSolution& solutio
 			int weight = solution.instance->graph.get_edge_weight(v_original, n_original);
 			//add edges from new vertex to solution graph
 			solution.graph.add_edge(i , index_n_original, weight);
+			at_least_one_edge_added = true;
 		}
 	}
 
-	solution.on_steiner_node_inserted(i);
-
-	cout << "inserting new vertex " << i << " with degee " << solution.graph.get_degree(i) << ".\n";
-
+	if(at_least_one_edge_added) {
+		solution.on_steiner_node_inserted(i);
+		cout << "inserting new vertex " << i << " with degee " << solution.graph.get_degree(i) << ".\n";
+	}
 
 }
 

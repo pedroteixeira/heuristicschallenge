@@ -26,10 +26,10 @@ struct EdgeInfo {
 	int weight;
 };
 
-typedef boost::adjacency_list_traits<boost::listS, boost::listS, boost::undirectedS>::vertex_descriptor
+typedef boost::adjacency_list_traits<boost::setS, boost::listS, boost::undirectedS>::vertex_descriptor
 		vertex_descriptor;
 
-typedef boost::adjacency_list < boost::listS, boost::listS, boost::undirectedS,
+typedef boost::adjacency_list < boost::setS, boost::listS, boost::undirectedS,
 boost::property<boost::vertex_index_t, int,
 boost::property<boost::vertex_distance_t, int,
 boost::property<boost::vertex_predecessor_t, vertex_descriptor> > >,
