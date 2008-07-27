@@ -24,7 +24,6 @@
 using namespace std;
 
 void SteinerSolution::find_mst_tree() {
-	boost::timer timer;
 	tree.clear();
 
 	//run prim's
@@ -42,7 +41,8 @@ void SteinerSolution::find_mst_tree() {
 	}
 
 	//eliminate all edges in graph that are not in tree (beware of invalidation of edges desccriptors)
-	//TODO: bad to elimated because it's our working structure (to enabled search, etc..)
+	//TODO: bad to elimated because it's our working structure? (to enabled search, etc..)
+
 	/*
 	int edges_removed = 0;
 	boost::graph_traits<BoostGraph>::edge_iterator ei, ei_end, next;
@@ -56,11 +56,14 @@ void SteinerSolution::find_mst_tree() {
 	cout << edges_removed << " edges eliminated from graph to match solution tree." << endl;
 	*/
 
+
 	//compact
-	/*
+	IntSet vertices_to_remove;
+
 	int edges_removed = 0;
-	list<Edge>::iterator iter = tree.begin();
-	while (iter != tree.end()) {
+	list<Edge>::iterator iter = tree.begin(), next;
+	for(next = iter; iter != tree.end(); iter = next) {
+		++next;
 		Edge e = *iter;
 
 		Vertex u = boost::source(e, graph.boostgraph);
@@ -72,149 +75,37 @@ void SteinerSolution::find_mst_tree() {
 		bool is_v_lonely = boost::degree(v, graph.boostgraph) == 1 && !instance->is_terminal(iv);
 
 		//removing 1-degree non-terminal nodes
-		if (is_u_lonely || is_v_lonely) {
+		if (is_u_lonely || is_v_lonely
+				|| vertices_to_remove.get<1>().find(iu) != vertices_to_remove.get<1>().end()
+				|| vertices_to_remove.get<1>().find(iv) != vertices_to_remove.get<1>().end())    {
 			tree.erase(iter);
-			//graph.remove_edge(e); TODO: Keep structure intact for now?
+			iter = next;
+			graph.remove_edge(e);
 			edges_removed++;
-		} else {
-			iter++;
 		}
 
+		if (is_u_lonely)
+			vertices_to_remove.push_back(iu);
 
-		//if (is_u_lonely)
-		//	graph.remove_vertex(u);
-
-		//if (is_v_lonely)
-		//	graph.remove_vertex(v);
+		if (is_v_lonely)
+			vertices_to_remove.push_back(iv);
 
 	}
 
-	if (edges_removed> 0)
-	cout << edges_removed << " edges lonely removed from solution tree. " << endl;
-	*/
+	foreach(int v, vertices_to_remove) {
+		out_vertices.remove(v);  //keep consistent
+		graph.remove_vertex(v);
+	}
 
-	cout << "mst computed and graph compacted in " << timer.elapsed() << " seconds." << endl;
+	if (edges_removed> 0) {
+		cout << edges_removed << " lonely edges and " << vertices_to_remove.size() << " vertices removed from solution tree. " << endl;
+	}
+
+
 }
 
-class dfs_time_visitor: public boost::default_dfs_visitor {
-
-public:
-	dfs_time_visitor(Graph& g, VertexSet& cs, list<list<Vertex> >& paths) :
-		graph(g), critical_set(cs), critical_hashed(cs.get<1> ()), on_key_path(false), keypaths(paths) {
-	}
-
-	void discover_vertex(Vertex u, const BoostGraph & g) {
-
-		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
-
-		if (is_critical) {
-			if (on_key_path) {
-				//end current path
-				path.push_back(u);
-				list<Vertex> tmp = path;
-				keypaths.push_back(tmp);
-				path.clear();
-			} else {
-				//start new from here
-				on_key_path = true;
-			}
-			//add key node to current path
-			path.push_back(u);
-			critical_stack.push(u);
-		} else if (on_key_path) {
-			//add seiner node to current path
-			path.push_back(u);
-		}
-	}
-
-	void examine_edge(Edge e, const BoostGraph & g) {
-	}
-
-	void finish_vertex(Vertex u, const BoostGraph & g) {
-		//update track
-		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
-		if (is_critical) {
-			path.clear();
-			//throw away finished
-			if (!critical_stack.empty())
-				critical_stack.pop();
-			//and restore previous critical (to deal with branches)
-			if (!critical_stack.empty()) {
-				path.push_back(critical_stack.top());
-				on_key_path = true;
-			} else {
-				on_key_path = false; //I guess only necessary if graph is disconnected
-			}
-		}
-	}
-
-	Graph& graph;
-	VertexSet& critical_set;
-	VertexHashSet& critical_hashed;
-	list<Vertex> path;
-	list<list<Vertex> >& keypaths;
-	stack<Vertex> critical_stack;
-	bool on_key_path;
-};
-
-void SteinerSolution::exchange_key_path() {
-
-	VertexSet critical_set;
-
-	//TODO: the following can be cached or done in pre-processing
-	//classify nodes
-	foreach(Vertex u, boost::vertices(graph.boostgraph)) {
-		int iu = graph.index_for_vertex(u);
-		if(boost::degree(u, graph.boostgraph)> 2 || instance->is_terminal(iu)) //is critical
-		critical_set.push_back(u);
-	}
-	assert(critical_set.size()> 0);
-	cout << critical_set.size() << " critical nodes found. \n";
-
-	//build all key paths
-	list< list<Vertex> > keypaths;
-	dfs_time_visitor vis(graph, critical_set, keypaths);
-
-	boost::depth_first_search(graph.boostgraph, boost::visitor(vis));
-
-	cout << keypaths.size() << " key-node paths built: \n";
-	foreach(list<Vertex> vertices, keypaths) {
-		int path_weight = 0; Vertex previous;
-		for(list<Vertex>::iterator iter = vertices.begin(); iter != vertices.end(); iter++) {
-			if(iter != vertices.begin()) {
-				Edge e; bool found;
-				boost::tie(e, found) = boost::edge(previous, *iter, graph.boostgraph);
-				assert(found);
-
-				path_weight += graph.get_edge_weight(e);
-			}
-			previous = *iter;
-			//cout << graph.index_for_vertex(*iter) << " - ";
-		}
-		//cout << "[" << path_weight << "] \n";
-
-		//TODO: cache distances
-		DistanceMap distances;
-		PredecessorMap parents;
-		graph.dijkstra_shortest_paths(vertices.front(), distances, parents);
-		int best_distance = distances[vertices.back()];
-
-		//		Vertex parent = vertices.back(), last_parent = parent, first = vertices.front();
-		//		while(last_parent != first) {
-		//			cout << graph.index_for_vertex(parent) << " - ";
-		//			last_parent = parent;
-		//			parent = parents[parent];
-		//		}
-		//		cout << "\n";
-
-		if(best_distance < path_weight) {
-			cout << "best distance FOUND is " << best_distance << " over " << path_weight << ".\n";
-		}
-	}
-
-	//do exchange
-
-	cout << endl;
+void SteinerSolution::add_edge_from_original(int u, int v) {
+	graph.add_edge(u, v, instance->graph.get_edge_weight(u, v));
 }
 
 
@@ -378,9 +269,7 @@ void SteinerSolution::generate_chins_solution(SteinerSolution& solution) {
 			bool is_feasible = find(vertices_in_solution.begin(), vertices_in_solution.end(), index_neighboor)!=vertices_in_solution.end(); //TODO: can make it O(1)
 
 			if(is_feasible && !solution.graph.contains_edge(v, index_neighboor)) {
-				//add edge with same weight to this sub graph
-				int weight = solution.instance->graph.get_edge_weight(vertex, *vi);
-				solution.graph.add_edge(v, index_neighboor, weight);
+				solution.add_edge_from_original(v, index_neighboor); //add edge with same weight to this sub graph
 			}
 		}
 	}

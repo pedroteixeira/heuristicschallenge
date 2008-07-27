@@ -68,6 +68,7 @@ public:
 	bool contains_vertex(int) const;
 	bool contains_edge(int, int) const;
 	int get_edge_weight(Vertex, Vertex) const;
+	int get_edge_weight(int, int) const;
 	int get_edge_weight(Edge) const;
 	int num_vertices() const;
 	int num_edges() const;
@@ -76,6 +77,8 @@ public:
 
 	void add_edge(int, int, int);
 	void remove_edge(Edge e);
+	void remove_edge(Vertex, Vertex);
+
 	void remove_vertex(Vertex v);
 	void remove_vertex(int v);
 

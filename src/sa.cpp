@@ -18,6 +18,7 @@
 #include "headers/steiner.hpp"
 #include "headers/steiner_solution.hpp"
 #include "headers/steiner_nodesearch.hpp"
+#include "headers/steiner_pathsearch.hpp"
 #include "headers/sa.hpp"
 
 using namespace std;
@@ -31,11 +32,11 @@ SaSteiner::SaSteiner(string instance_path) {
 void SaSteiner::run() {
 
 	//parameters
-	int max_outer_iterations = 10;
-	int max_inner_iterations = 1;
-	float temperature = 10 * (instance->V);
+	int max_outer_iterations = 20;
+	int max_inner_iterations = 100;
+	float temperature =  100; //(instance->V);
 	float lowest_temp = 0.0001;
-	float alpha = 0.995f;
+	float alpha = 0.9f;
 	boost::timer t0;
 
 	boost::mt19937 rng;
@@ -48,6 +49,7 @@ void SaSteiner::run() {
 
 	//initial energy
 	int energy = solution.find_cost();
+	best_energy = energy;
 
 	solution.graph.writedot("chins.dot");
 
@@ -65,7 +67,9 @@ void SaSteiner::run() {
 			SteinerSolution new_solution(solution);
 
 			//key-path based neighborhood search
-			pair<int, int> result = SteinerNodeLocalSearch::search(new_solution);
+			SteinerNodeLocalSearch::search(new_solution);
+			SteinerPathLocalSearch::search(new_solution);
+
 
 			//solution.exchange_key_path();
 
@@ -84,7 +88,7 @@ void SaSteiner::run() {
 				p = exp(-delta / temperature);
 
 				if (uniform() < p) {
-					cout << "accepting worse/same new solution: " << new_energy << "| p = " << p << endl;
+					cout << "accepting worse or same new solution: " << new_energy << "| p = " << p << endl;
 
 					solution = new_solution;
 					energy = new_energy;
@@ -99,10 +103,12 @@ void SaSteiner::run() {
 		}
 
 		temperature = temperature * alpha;
+		cout << k << "iterations.  Temperature decreased to " << temperature << "\n";
 		outer_iterations++;
 	}
 
-	cout << "simulation finished: " << k << " total iterations in " << t0.elapsed() << " seconds." << endl;
+	cout << "simulation finished: " << k << " total iterations in " << t0.elapsed() << " seconds. \n";
+	cout << "best energy found was: " << best_energy << "\n";
 }
 
 void SaSteiner::record_best(SteinerSolution& new_solution, int new_energy) {

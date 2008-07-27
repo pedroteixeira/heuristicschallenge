@@ -14,12 +14,12 @@
 
 class SteinerNodeLocalSearch {
 public:
-	static std::pair<int, int> search(SteinerSolution&);
+	static void search(SteinerSolution&);
 
 
 private:
 	static void remove_steiner_node(int, SteinerSolution&);
-	static void insert_steiner_node(int, SteinerSolution&);
+	static bool insert_steiner_node(int, SteinerSolution&);
 };
 
 #endif /* STEINER_NODESEARCH_HPP_ */

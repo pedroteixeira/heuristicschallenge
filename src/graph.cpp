@@ -45,11 +45,8 @@ void Graph::copy(const Graph& from, Graph& to) {
 		int v_index = from.index_bimap.right.at(v);
 		to.add_edge(u_index, v_index,	from.get_edge_weight(u, v));
 
-		//cout << u_index << " - " << v_index << "\n";
-		//assert( to.num_edges() == ++edges_added);
 	}
 
-	cout << from.num_edges() << ", " << to.num_edges() << "\n";
 	assert(from.num_vertices() == to.num_vertices());
 	assert(from.num_edges() == to.num_edges());
 }
@@ -112,18 +109,22 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 	}
 }
 
+
+
+void Graph::remove_edge(Vertex u, Vertex v) {
+	boost::remove_edge(u, v, boostgraph);
+}
+
 void Graph::remove_edge(Edge e) {
 	boost::remove_edge(e, boostgraph);
 }
 
 void Graph::remove_vertex(int v) {
-	remove_vertex(get_vertex(v));
+	if(contains_vertex(v))
+		remove_vertex(get_vertex(v));
 }
 
 void Graph::remove_vertex(Vertex v) {
-
-	int _V = num_vertices();
-	int _E = num_edges();
 
 	boost::clear_vertex(v, boostgraph);
 	boost::remove_vertex(v, boostgraph);
@@ -131,8 +132,6 @@ void Graph::remove_vertex(Vertex v) {
 	int index_v = index_bimap.right.at(v);
 	index_bimap.right.erase(v);
 	index_bimap.left.erase(index_v);
-
-	assert( index_bimap.left.find(index_v) == index_bimap.left.end() );
 
 	//keep indexmap contiguous
 	int index = 0;
@@ -186,6 +185,10 @@ int Graph::get_edge_weight(Vertex v, Vertex u) const {
 	boost::tie(e, found) = boost::edge(v, u, boostgraph);
 	assert(found);
 	return boost::get(weightmap, e);
+}
+
+int Graph::get_edge_weight(int u, int v) const {
+	return get_edge_weight(get_vertex(u), get_vertex(v));
 }
 
 int Graph::get_edge_weight(Edge e) const {

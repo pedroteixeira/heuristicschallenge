@@ -13,6 +13,7 @@
 
 #include <boost/random.hpp>
 #include "steiner.hpp"
+#include "util.hpp"
 
 class SteinerSolution {
 public:
@@ -22,12 +23,14 @@ public:
 	std::list<Edge> tree;
 	Steiner* instance;
 	Graph graph;
-	std::list<int> out_vertices;
+	IntSet out_vertices;
 
 	int find_cost();
 	void exchange_key_path();
 	void build_candidates_out_vertices();
 	void find_mst_tree();
+
+	void add_edge_from_original(int, int);
 
 	static void generate_chins_solution(SteinerSolution&);
 
