@@ -17,7 +17,7 @@ public:
 	int V; //number of vertices
 	int E; //number of edges
 	Graph graph;
-	std::vector<int> terminals;
+	IntSet terminals;
 	std::map<int, VertexInfo> vertices_info;
 	std::map<int, std::vector<int> > distances_from_terminal;
 	std::map<int, std::vector<int> > parents_from_terminal;

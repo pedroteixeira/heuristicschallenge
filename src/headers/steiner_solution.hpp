@@ -24,15 +24,21 @@ public:
 	Steiner* instance;
 	Graph graph;
 	IntSet out_vertices;
+	IntSet virtual_terminals;
 
+	bool is_terminal(int);
 	int find_cost();
-	void exchange_key_path();
-	void build_candidates_out_vertices();
-	void find_mst_tree();
 
+	void build_candidates_out_vertices();
 	void add_edge_from_original(int, int);
 
+	void find_mst_tree();
+	void undo_last_cropped_edges();
+
+
 	static void generate_chins_solution(SteinerSolution&);
+
+
 
 	//'events'
 	void on_steiner_node_inserted(int);
@@ -44,6 +50,8 @@ private:
 
 	void update_candidates_out_vertices(int);
 	bool is_new_candidate_for_out_vertex(int);
+
+	std::list<std::pair<int, int> > last_cropped_edges;
 };
 
 #endif /* STEINER_SOLUTION_HPP_ */

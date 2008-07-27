@@ -1,1 +1,4 @@
 Debug
+*.dot
+*.ps
+log.txt

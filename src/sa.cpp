@@ -47,11 +47,12 @@ void SaSteiner::run() {
 	SteinerSolution::generate_chins_solution(solution);
 	solution.build_candidates_out_vertices();
 
+
 	//initial energy
 	int energy = solution.find_cost();
 	best_energy = energy;
 
-	solution.graph.writedot("chins.dot");
+
 
 	cout << "initial energy: " << energy << endl;
 

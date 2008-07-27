@@ -35,13 +35,18 @@ void SteinerNodeLocalSearch::search(SteinerSolution& solution) {
 				best_cost = cost;
 				best_vertex_to_insert = i;
 			}
+
+			//undo insert
 			remove_steiner_node(i, solution);
+			solution.undo_last_cropped_edges(); //original edges might have been removed due to new steiner node
 		}
 	}
 
 	//keep best
-	insert_steiner_node(best_vertex_to_insert, solution);
-	solution.find_mst_tree();
+	if(best_cost != INT_MAX) {
+		insert_steiner_node(best_vertex_to_insert, solution);
+		solution.find_mst_tree();
+	}
 
 }
 
@@ -70,6 +75,7 @@ bool SteinerNodeLocalSearch::insert_steiner_node(int i, SteinerSolution& solutio
 			//get weight from original graph
 			int weight = solution.instance->graph.get_edge_weight(v_original, n_original);
 			//add edges from new vertex to solution graph
+			cout << "adding steiner edge " << i << ", "<< index_n << "\n";
 			solution.graph.add_edge(i , index_n, weight);
 			at_least_one_edge_added = true;
 		}

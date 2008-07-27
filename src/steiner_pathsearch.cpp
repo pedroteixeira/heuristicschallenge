@@ -41,7 +41,8 @@ public:
 			//add key node to current path
 			path.push_back(u);
 			critical_stack.push(u);
-		} else if (on_key_path) {
+		}
+		else if (on_key_path) {
 			//add seiner node to current path
 			path.push_back(u);
 		}
@@ -85,7 +86,7 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 	//classify nodes
 	foreach(Vertex u, boost::vertices(solution.graph.boostgraph)) {
 		int iu = solution.graph.index_for_vertex(u);
-		if(boost::degree(u, solution.graph.boostgraph)> 2 || solution.instance->is_terminal(iu)) //is critical
+		if(boost::degree(u, solution.graph.boostgraph)> 2 || solution.is_terminal(iu)) //is critical
 		critical_set.push_back(u);
 	}
 	assert(critical_set.size()> 0);
@@ -112,9 +113,9 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 				}
 			}
 			previous = *iter;
-			cout << solution.graph.index_for_vertex(*iter) << " - ";
+			//cout << solution.graph.index_for_vertex(*iter) << " - ";
 		}
-		cout << "[" << path_weight << "] \n";
+		//cout << "[" << path_weight << "] \n";
 
 
 		//find shortest distance between two critical nodes and compare
@@ -140,6 +141,8 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Vertex>& keypath,
 		PredecessorMap& shortestpath) {
 
+	solution.graph.writedot("nodepath_before.dot");
+
 	//remove old path
 	cout << "removing old path: ";
 	Vertex previous;
@@ -164,5 +167,7 @@ void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Verte
 	}
 	cout << "\n";
 
+
+	solution.graph.writedot("nodepath_after.dot");
 
 }

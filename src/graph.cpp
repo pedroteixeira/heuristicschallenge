@@ -25,7 +25,7 @@ Graph::Graph(const Graph& graph) {
 
 Graph& Graph::operator = ( const Graph& graph ) {
 	if(this != &graph)
-		copy(graph, *this);
+	copy(graph, *this);
 	return *this;
 }
 
@@ -43,7 +43,7 @@ void Graph::copy(const Graph& from, Graph& to) {
 
 		int u_index = from.index_bimap.right.at(u);
 		int v_index = from.index_bimap.right.at(v);
-		to.add_edge(u_index, v_index,	from.get_edge_weight(u, v));
+		to.add_edge(u_index, v_index, from.get_edge_weight(u, v));
 
 	}
 
@@ -100,7 +100,7 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 	//TODO: is it better to be explicit about parallel edges? (using setS implies overhead)
 	boost::tie(e, found) = boost::edge(u, v, boostgraph);
 
-	if(!found) {
+	if (!found) {
 		bool inserted;
 		boost::tie(e, inserted) = boost::add_edge(u, v, weight, boostgraph);
 		assert(inserted);
@@ -108,8 +108,6 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 		cerr << "edge already added : " << u_index << ", " << v_index << "\n";
 	}
 }
-
-
 
 void Graph::remove_edge(Vertex u, Vertex v) {
 	boost::remove_edge(u, v, boostgraph);
@@ -120,7 +118,7 @@ void Graph::remove_edge(Edge e) {
 }
 
 void Graph::remove_vertex(int v) {
-	if(contains_vertex(v))
+	if (contains_vertex(v))
 		remove_vertex(get_vertex(v));
 }
 
@@ -218,26 +216,26 @@ void Graph::print() {
 
 }
 
-
-
-class custom_label_writer {
-  public:
-  	custom_label_writer(Graph& _graph) : _graph(&_graph) {}
-    template <class VertexOrEdge>
-    void operator()(std::ostream& out, const VertexOrEdge& v) const {
-      out << "[label=\"" << _graph->index_for_vertex(v) << "\"]";
-    }
-  private:
-    Graph* _graph;
-  };
-
 void Graph::writedot(string path) {
-	boost::dynamic_properties dp;
-	dp.property("id", indexmap);
-	dp.property("weight", weightmap);
-	ofstream out(path.c_str());
-	//boost::write_graphviz(out, boostgraph, dp, string("id"));
-	boost::write_graphviz(out, boostgraph, custom_label_writer(*this));
+
+	ofstream dot_file(path.c_str());
+
+	dot_file << "graph G {\n";
+
+	foreach(Edge e, boost::edges(boostgraph)) {
+
+		Vertex u = boost::source(e, boostgraph);
+		Vertex v = boost::target(e, boostgraph);
+		dot_file << index_for_vertex(u) << " -- " << index_for_vertex(v);
+
+		dot_file << "\n";
+
+		//<< "[label=\"" << get_edge_weight(u,v) << "\"";
+		//dot_file << ", color=\"black\"";
+		//dot_file << "]; \n";
+	}
+	dot_file << "}";
+
 }
 /*
 

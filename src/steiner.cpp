@@ -128,7 +128,7 @@ inline void Steiner::read_coordinates_section(ifstream & in_data) {
 }
 
 bool Steiner::is_terminal(int v) {
-	return find(terminals.begin(), terminals.end(), v) != terminals.end(); //make it O(1)
+	return terminals.get<1>().find(v) != terminals.get<1>().end(); //make it O(1)
 }
 
 
