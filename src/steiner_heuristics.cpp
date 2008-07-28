@@ -8,6 +8,7 @@
 #include "headers/steiner_solution.hpp"
 #include "headers/steiner_heuristics.hpp"
 
+#include <boost/random.hpp>
 
 using namespace std;
 
@@ -16,6 +17,15 @@ using namespace std;
  * Heuristics to generate good solution.
  */
 SteinerSolution SteinerHeuristics::generate_chins_solution(Steiner& instance) {
+	//pick random initial terminal
+	boost::uniform_int<> range(0, instance.terminals.size()-1);
+	boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
+	int t0 = die();
+
+	generate_chins_solution(t0, instance);
+}
+
+SteinerSolution SteinerHeuristics::generate_chins_solution(int root_terminal, Steiner& instance) {
 
 	SteinerSolution solution(instance);
 
@@ -23,14 +33,10 @@ SteinerSolution SteinerHeuristics::generate_chins_solution(Steiner& instance) {
 	list<int> terminals_left(solution.instance.terminals.size());
 	std::copy(solution.instance.terminals.begin(), solution.instance.terminals.end(), terminals_left.begin());
 
-	assert(terminals_left.size()> 0);
-
 	list<int> vertices_in_solution;
 
-	//pick initial terminal
-	int t0 = terminals_left.front();
-	terminals_left.pop_front();
-	vertices_in_solution.push_back(t0);
+	terminals_left.remove(root_terminal);
+	vertices_in_solution.push_back(root_terminal);
 
 	while (terminals_left.size() > 0) {
 		//choose terminal closest to any of the vertices added
@@ -108,9 +114,5 @@ SteinerSolution SteinerHeuristics::generate_chins_solution(Steiner& instance) {
 
 	//initialize
 	solution.find_mst_tree();
-	solution.build_candidates_out_key_nodes();
-	solution.build_candidates_in_key_nodes();
-
-
 	return solution;
 }

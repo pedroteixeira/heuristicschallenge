@@ -82,7 +82,6 @@ void SteinerSolution::compact_graph() {
 			vertices_to_remove.push_back(iv);
 
 		foreach(int x, vertices_to_remove) {
-			out_key_nodes.remove(x); //keep consistent
 			graph.remove_vertex(x);
 		}
 	}
@@ -286,7 +285,7 @@ int SteinerSolution::find_cost() {
 
 SteinerSolution::SteinerSolution(Steiner& steiner) :
 	instance(steiner) {
-	cout << "SteinerSolution::SteinerSolution(Steiner* steiner)" << endl;
+	//cout << "SteinerSolution::SteinerSolution(Steiner* steiner)" << endl;
 }
 
 SteinerSolution::SteinerSolution(const SteinerSolution& solution) :

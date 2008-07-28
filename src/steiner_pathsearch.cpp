@@ -98,8 +98,6 @@ public:
 
 void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 
-	solution.graph.writedot("solution_beforesearch.dot");
-
 	VertexSet critical_set;
 
 	//TODO: the following can be cached or done in pre-processing

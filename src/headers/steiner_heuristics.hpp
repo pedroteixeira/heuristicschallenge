@@ -13,6 +13,7 @@
 
 class SteinerHeuristics {
 public:
+	static SteinerSolution generate_chins_solution(int, Steiner&);
 	static SteinerSolution generate_chins_solution(Steiner&);
 };
 #endif /* STEINER_HEURISTICS_HPP_ */
