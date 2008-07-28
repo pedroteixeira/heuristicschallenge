@@ -24,6 +24,7 @@
 #include "headers/sa.hpp"
 
 
+
 using namespace std;
 
 SaSteiner::SaSteiner(string instance_path) {
@@ -34,8 +35,10 @@ SaSteiner::SaSteiner(string instance_path) {
 
 void SaSteiner::run() {
 
+	//log4cxx::LoggerPtr logger = log4cxx::Logger::getRootLogger();
+
 	//parameters
-	int max_outer_iterations = 20;
+	int max_outer_iterations = 50;
 	int max_inner_iterations = 100;
 	float temperature =  instance->V;
 	float lowest_temp = 0.0001;
@@ -52,6 +55,8 @@ void SaSteiner::run() {
 	int energy = solution.find_cost();
 	best_energy = energy;
 
+	//LOG4CXX_INFO(logger, "initial energy: " << energy << "\n");
+
 	cout << "initial energy: " << energy << endl;
 
 	//working variables
@@ -66,10 +71,10 @@ void SaSteiner::run() {
 			SteinerSolution new_solution(solution);
 
 			//key-path based neighborhood search
-
-			//SteinerNodeLocalSearch::remove(new_solution);
 			SteinerNodeLocalSearch::insert(new_solution);
-			SteinerPathLocalSearch::search(new_solution);
+			SteinerNodeLocalSearch::remove(new_solution);
+			for(int j=0; j<10; j++)
+				SteinerPathLocalSearch::search(new_solution);
 
 			int new_energy = new_solution.find_cost();
 

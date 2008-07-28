@@ -137,9 +137,9 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 				}
 			}
 			previous = *iter;
-			cout << solution.graph.index_for_vertex(*iter) << " - ";
+			//cout << solution.graph.index_for_vertex(*iter) << " - ";
 		}
-		cout << "[" << path_weight << "] \n";
+		//cout << "[" << path_weight << "] \n";
 
 
 		//find shortest distance between two critical nodes and compare
@@ -169,13 +169,18 @@ void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Verte
 	//remove old path
 	cout << "removing old path: ";
 	foreach(Vertex v, keypath) {
-		cout << solution.graph.index_for_vertex(v) << ", ";
+		//cout << solution.graph.index_for_vertex(v) << ", ";
 		if(v != keypath.front() && v != keypath.back()) {
-			assert(solution.graph.get_degree(v) == 2);  //TODO: temp check
+			if(solution.graph.get_degree(v) > 2) {
+				cerr << "something went wrong - non key-node with degree > 2 " << solution.graph.index_for_vertex(v) << "\n";
+				solution.graph.writedot("oddkeynodepath.dot");
+				assert(false);
+			}
+			assert(solution.graph.get_degree(v) <= 2);  //TODO: temp check
 			solution.graph.remove_vertex(v);
 		}
 	}
-	cout << "\n";
+	//cout << "\n";
 
 	//add new (better) path
 	cout << "adding new path: ";

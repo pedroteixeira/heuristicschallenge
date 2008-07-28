@@ -69,21 +69,21 @@ void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& 
 	//find out how many disconnected components we made
 	DistanceMap components;
 	int num = boost::connected_components(solution.graph.boostgraph, components);
-	cout << "steiner node " << vertex_removed << " was removed and yielded " << num << " components.\n";
+	//cout << "steiner node " << vertex_removed << " was removed and yielded " << num << " components.\n";
 
 	if (num == 1) {
 		return;
 	}
 
-	//try cheap first
+	//try cheap first  //TODO: understand different and randomize usage
 	solution.grow_graph();
 	num = boost::connected_components(solution.graph.boostgraph, components);
 	if(num == 1) {
-		cout << "quick grow was enough to re-connect.\n";
+		//cout << "quick grow was enough to re-connect.\n";
 		return;
 	}
 
-	cout << "after quick grow there were left " << num << " components.\n";
+	//cout << "after quick grow there were left " << num << " components.\n";
 
 	map<int, list<Vertex> > vertices_by_component;
 	for (int j = 0; j < num; j++)
@@ -150,21 +150,23 @@ void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& 
 		vector<int> distances, parents;
 		boost::tie(distances, parents) = solution.instance.get_shortest_distances( best_way.from_vertex );
 
+
+		solution.add_path(best_way.from_vertex, best_way.to_vertex, parents);
+
+		/*
 		cout << "connecting components " << component << " and " << to_component << " from "
 						<< best_way.from_vertex << " to " << best_way.to_vertex << " with cost " << best_way.shortest_distance << "\n";
 
-
-		solution.add_path(best_way.from_vertex, best_way.to_vertex, parents);
 
 		boost::tie(distances, parents) = solution.instance.get_shortest_distances( vertex_removed );
 		cout << "distance from removed steiner " << vertex_removed << " to " << best_way.from_vertex;
 		cout << " " << distances[best_way.from_vertex];
 		cout << " and to " << best_way.to_vertex << " " << distances[best_way.to_vertex] << "\n";
+		*/
 
 
 	}
 
-	cout << endl;
 	num = boost::connected_components(solution.graph.boostgraph, components);
 	assert(num == 1);
 
