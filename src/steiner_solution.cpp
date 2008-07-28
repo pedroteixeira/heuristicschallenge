@@ -17,6 +17,7 @@
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/graph/random.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/undirected_dfs.hpp>
 
 #include <boost/progress.hpp>
 
@@ -51,43 +52,37 @@ void SteinerSolution::find_mst_tree() {
 
 }
 
-void SteinerSolution::compact_graph() {
-	int edges_removed = 0;
-	list<pair<int, int> >::iterator iter = tree.begin(), next;
-	for (next = iter; iter != tree.end(); iter = next) {
-		++next;
+class prune_visitor: public boost::default_dfs_visitor {
+public:
+	prune_visitor(SteinerSolution& s, map<int, int>& d, list<Vertex>& l) :
+		solution(s), vertices_to_prune(l), degree(d) {
+	}
 
-		int iu = (*iter).first;
-		int iv = (*iter).second;
-		Vertex u = graph.get_vertex(iu);
-		Vertex v = graph.get_vertex(iv);
+	void finish_vertex(Vertex u, const BoostGraph & g) {
+		int iu = solution.graph.index_for_vertex(u);
+		if (!solution.is_terminal(iu)) {
 
-		bool is_u_lonely = boost::degree(u, graph.boostgraph) <= 1 && !is_terminal(iu);
-		bool is_v_lonely = boost::degree(v, graph.boostgraph) <= 1 && !is_terminal(iv);
+			if (degree[iu] <= 1) {
 
-		IntSet vertices_to_remove;
-		//removing 1-degree non-terminal nodes
-		if (is_u_lonely || is_v_lonely || (vertices_to_remove.get<1> ().find(iu) != vertices_to_remove.get<1> ().end())
-				|| (vertices_to_remove.get<1> ().find(iv) != vertices_to_remove.get<1> ().end())) {
+				foreach(Vertex n, boost::adjacent_vertices(u, g)) {
+					int in = solution.graph.index_for_vertex(n);
+					degree[in] = degree[in]-1;
+				}
 
-			tree.erase(iter);
-			graph.remove_edge(u, v);
-			edges_removed++;
-		}
-
-		if (is_u_lonely)
-			vertices_to_remove.push_back(iu);
-
-		if (is_v_lonely)
-			vertices_to_remove.push_back(iv);
-
-		foreach(int x, vertices_to_remove) {
-			graph.remove_vertex(x);
+				vertices_to_prune.push_back(u);
+			}
 		}
 	}
 
+	SteinerSolution& solution;
+	list<Vertex>& vertices_to_prune;
+	map<int,int>& degree;
+};
+
+void SteinerSolution::compact_graph() {
+
 	//eliminate all edges in graph that are not in tree (beware of invalidation of edges desccriptors)
-	edges_removed = 0;
+	int edges_removed = 0;
 
 	boost::graph_traits<BoostGraph>::edge_iterator ei, ei_end, ei_next;
 	boost::tie(ei, ei_end) = boost::edges(graph.boostgraph);
@@ -113,7 +108,45 @@ void SteinerSolution::compact_graph() {
 		}
 	}
 
+
+	//prune graph
+
+	map<int, int> degree;
+	foreach(Vertex u, boost::vertices(graph.boostgraph)) {
+		degree.insert(make_pair( graph.index_for_vertex(u), boost::degree(u, graph.boostgraph)));
+	}
+
+	list<Vertex> vertices_to_prune;
+	prune_visitor vis(*this, degree, vertices_to_prune);
+	boost::depth_first_search(graph.boostgraph, boost::visitor(vis));
+
+	foreach(Vertex u, vertices_to_prune) {
+		graph.remove_vertex(u);
+	}
+
+	//cout << vertices_to_prune.size() << " vertices pruned from tree.\n";
+
+
+
+	//trim tree structure
+
+	edges_removed = 0;
+	list<pair<int, int> >::iterator iter = tree.begin(), next;
+	for (next = iter; iter != tree.end(); iter = next) {
+		++next;
+
+		int iu = (*iter).first;
+		int iv = (*iter).second;
+
+		IntSet vertices_to_remove;
+		if (!graph.contains_vertex(iu) || !graph.contains_vertex(iv)) {
+			tree.erase(iter);
+			edges_removed++;
+		}
+	}
+
 	//temp sanity check
+	/*
 	list<Vertex> cycle;
 	if (graph.has_cycle(cycle)) {
 		graph.writedot("treewithcycle.dot");
@@ -129,6 +162,7 @@ void SteinerSolution::compact_graph() {
 	DistanceMap components;
 	int num = boost::connected_components(graph.boostgraph, components);
 	assert(num == 1);
+	*/
 }
 
 void SteinerSolution::grow_graph() {

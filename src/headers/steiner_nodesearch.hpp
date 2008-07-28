@@ -30,7 +30,7 @@ public:
 private:
 	static void connect_graph(int, SteinerSolution&); // TODO: move to sution
 	static void remove_key_node(int, SteinerSolution&);
-	static bool insert_key_node(int, SteinerSolution&);
+	static void insert_key_node(int, SteinerSolution&);
 };
 
 #endif /* STEINER_NODESEARCH_HPP_ */

@@ -172,8 +172,11 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 	vector<int> candidates_steiner_nodes;
 	foreach(Vertex u, boost::vertices(solution.instance.graph.boostgraph)) {
 		int iu = solution.instance.graph.index_for_vertex(u);
-		if(!solution.graph.contains_vertex(iu))
-		candidates_steiner_nodes.push_back(iu);
+		if(!solution.graph.contains_vertex(iu)) {
+			//restrict more //theses nodes seem more interesting (better heuristic??)
+			if(boost::degree(u, solution.instance.graph.boostgraph) > 2)
+				candidates_steiner_nodes.push_back(iu);
+		}
 	}
 
 	//randomize? just a subset?
@@ -187,16 +190,27 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 
 		SteinerSolution tmp_solution = solution;
 
+		//tmp_solution.graph.writedot("before_insert.dot");
+
 		//insert new key node
 		insert_key_node(iu, tmp_solution);
 
+		//tmp_solution.graph.writedot("after_insert.dot");
+
 		tmp_solution.find_mst_tree();
+
+		//tmp_solution.graph.writedot("after_trim.dot");
 
 		//check if it was worth it
 		cost = tmp_solution.find_cost();
+
+		cout << " temp solution with cost " << cost << "\n";
+
 		if (cost < best_cost) {
 			best_cost = cost;
 			best_vertex_to_insert = iu;
+
+			break; //does not need to keep going, right?
 		}
 	}
 
@@ -210,21 +224,32 @@ void SteinerNodeLocalSearch::remove_key_node(int iu, SteinerSolution& solution) 
 	solution.graph.remove_vertex(iu);
 }
 
-bool SteinerNodeLocalSearch::insert_key_node(int iu, SteinerSolution& solution) {
+void SteinerNodeLocalSearch::insert_key_node(int iu, SteinerSolution& solution) {
 
 	vector<int> distances, parents;
 	boost::tie(distances, parents) = solution.instance.get_shortest_distances(iu);
 
-	//find best wat to add steiner node to current tree
-	int vertex_to_connect;
-	int shortest_distance = INT_MAX;
-	foreach(Vertex v, boost::vertices(solution.graph.boostgraph)) {
-		int iv = solution.graph.index_for_vertex(v);
-		if(distances[iv] < shortest_distance) {
-			vertex_to_connect = iv; shortest_distance = distances[iv];
-		}
+	//add all shortest paths to all terminals of current tree ( ?? )
+
+	foreach(int t, solution.instance.terminals) {
+		solution.add_path(iu, t, parents);
 	}
-	//cout << "adding path to new steiner node " << iu << " to " << vertex_to_connect << " with cost " << shortest_distance << "\n";
-	solution.add_path(iu, vertex_to_connect, parents);
+
+
+	//add all paths
+	/*
+	list<int> vertices_to_connect;
+	foreach(Vertex v, boost::vertices(solution.graph.boostgraph)) {
+		vertices_to_connect.push_back( solution.graph.index_for_vertex(v) );
+	}
+
+	foreach(int iv, vertices_to_connect) {
+		solution.add_path(iu, iv, parents);
+	}
+	*/
+
+
+	solution.grow_graph();
+
 }
 
