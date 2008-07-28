@@ -179,10 +179,12 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 		}
 	}
 
-	//randomize? just a subset?
-	//random_shuffle(candidates_steiner_nodes.begin(), candidates_steiner_nodes.end());
+	cout << candidates_steiner_nodes.size() << " candidates steiner nodes to insert. \n";
 
-	int best_cost = INT_MAX, cost;
+	//randomize? use just a subset?
+	random_shuffle(candidates_steiner_nodes.begin(), candidates_steiner_nodes.end());
+
+	int best_cost = INT_MAX, cost, original_cost = solution.find_cost();
 	int best_vertex_to_insert;
 	foreach(int iu, candidates_steiner_nodes) {
 		if(solution.graph.contains_vertex(iu))
@@ -210,7 +212,8 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 			best_cost = cost;
 			best_vertex_to_insert = iu;
 
-			break; //does not need to keep going, right?
+			if(cost < original_cost)
+				break; //does not need to keep going, right?
 		}
 	}
 
