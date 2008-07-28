@@ -18,7 +18,6 @@
 #include "headers/steiner_solution.hpp"
 using namespace std;
 
-
 Steiner::Steiner(const Steiner& steiner) {
 	cout << "Steiner::Steiner(const Steiner& steiner)" << endl;
 
@@ -48,33 +47,6 @@ Steiner::Steiner(string path) {
 	}
 
 	cout << "done reading." << endl;
-
-	//pre-calculations
-	boost::timer timer;
-	cout << "pre-calculating distances from all terminals..." << endl;
-	foreach(int terminal, terminals) {
-		DistanceMap distances;
-		PredecessorMap parents;
-
-		graph.dijkstra_shortest_paths(terminal, distances, parents);
-
-		//convert and store
-		vector<int> vector_distances(V);
-		vector<int> vector_predecessors;
-		for(int i=0; i<V;i++) {
-			Vertex v = graph.get_vertex(i);
-			vector_distances.insert ( vector_distances.begin() + i, distances[v] );
-			vector_predecessors.insert( vector_predecessors.begin() + i, graph.index_for_vertex( parents[v] ) );
-		}
-
-		distances_from_terminal[terminal] = vector_distances;
-		parents_from_terminal[terminal] = vector_predecessors;
-	}
-
-
-	cout << "distances computed in " << timer.elapsed() << " seconds." << endl;
-
-
 }
 
 inline void Steiner::read_graph_section(ifstream & in_data) {
@@ -128,7 +100,41 @@ inline void Steiner::read_coordinates_section(ifstream & in_data) {
 }
 
 bool Steiner::is_terminal(int v) {
-	return terminals.get<1>().find(v) != terminals.get<1>().end(); //make it O(1)
+	return terminals.get<1> ().find(v) != terminals.get<1> ().end(); //make it O(1)
 }
 
+
+
+int Steiner::get_parent_in_shortest_path(int from, int child) {
+
+	vector<int> distances, parents;
+	boost::tie(distances, parents) = get_shortest_distances(from);
+
+	return parents[child];
+}
+
+std::pair<std::vector<int>, std::vector<int> > Steiner::get_shortest_distances(int from) {
+
+	if (shortest_distances.find(from) == shortest_distances.end()) {
+
+		DistanceMap distances;
+		PredecessorMap parents;
+
+		graph.dijkstra_shortest_paths(from, distances, parents);
+
+		//convert and store
+		vector<int> vector_distances(V);
+		vector<int> vector_predecessors;
+		for (int i = 0; i < V; i++) {
+			Vertex v = graph.get_vertex(i);
+			vector_distances.insert(vector_distances.begin() + i, distances[v]);
+			vector_predecessors.insert(vector_predecessors.begin() + i, graph.index_for_vertex(parents[v]));
+		}
+
+		shortest_distances[from] = vector_distances;
+		shortest_parents[from] = vector_predecessors;
+	}
+
+	return make_pair(shortest_distances[from], shortest_parents[from]);
+}
 

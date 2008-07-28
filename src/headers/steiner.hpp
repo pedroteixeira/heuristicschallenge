@@ -14,20 +14,25 @@
 
 class Steiner {
 public:
+	Steiner(const Steiner&);
+	Steiner(std::string);
+
 	int V; //number of vertices
 	int E; //number of edges
 	Graph graph;
 	IntSet terminals;
 	std::map<int, VertexInfo> vertices_info;
-	std::map<int, std::vector<int> > distances_from_terminal;
-	std::map<int, std::vector<int> > parents_from_terminal;
-	bool is_terminal(int v);
-	Steiner(const Steiner&);
-	Steiner(std::string);
 
 	boost::mt19937 rng;
 
+	bool is_terminal(int v);
+	std::pair<std::vector<int>, std::vector<int> > get_shortest_distances(int v);
+	int get_parent_in_shortest_path(int, int);
+
 private:
+
+	std::map<int, std::vector<int> > shortest_distances;
+	std::map<int, std::vector<int> > shortest_parents;
 
 	void read_graph_section(std::ifstream&);
 	void read_terminals_section(std::ifstream&);

@@ -41,8 +41,7 @@ public:
 			//add key node to current path
 			path.push_back(u);
 			critical_stack.push(u);
-		}
-		else if (on_key_path) {
+		} else if (on_key_path) {
 			//add seiner node to current path
 			path.push_back(u);
 		}
@@ -52,10 +51,11 @@ public:
 	}
 
 	void finish_vertex(Vertex u, const BoostGraph & g) {
+		path.clear();
+
 		//update track
 		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
 		if (is_critical) {
-			path.clear();
 			//throw away finished
 			if (!critical_stack.empty())
 				critical_stack.pop();
@@ -119,11 +119,11 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 
 
 		//find shortest distance between two critical nodes and compare
-		//TODO: cache distances
-		DistanceMap distances;
-		PredecessorMap parents;
-		solution.graph.dijkstra_shortest_paths(keypath.front(), distances, parents);
-		int best_distance = distances[keypath.back()];
+		vector<int> distances, parents;
+		int from = solution.graph.index_for_vertex(keypath.front());
+		int to = solution.graph.index_for_vertex(keypath.back());
+		boost::tie(distances, parents) = solution.instance.get_shortest_distances(from);
+		int best_distance = distances[to];
 
 		if(best_distance < path_weight) {
 			cout << "!! best distance FOUND is " << best_distance << " over " << path_weight << ".\n";
@@ -138,10 +138,9 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 	cout << endl;
 }
 
-void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Vertex>& keypath,
-		PredecessorMap& shortestpath) {
+void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Vertex>& keypath, vector<int>& shortestpath) {
 
-	solution.graph.writedot("nodepath_before.dot");
+	//solution.graph.writedot("nodepath_before.dot");
 
 	//remove old path
 	cout << "removing old path: ";
@@ -157,17 +156,8 @@ void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Verte
 
 	//add new (better) path
 	cout << "adding new path: ";
-	Vertex last_parent = keypath.back(), parent = shortestpath[last_parent], first = keypath.front();
-	while (last_parent != first) {
-		cout << solution.graph.index_for_vertex(last_parent) << "," << solution.graph.index_for_vertex(parent) << " - ";
-		solution.add_edge_from_original(solution.graph.index_for_vertex(last_parent), solution.graph.index_for_vertex(parent));
+	solution.add_path(solution.graph.index_for_vertex(keypath.front()), solution.graph.index_for_vertex(keypath.back()), shortestpath);
 
-		last_parent = parent;
-		parent = shortestpath[parent];
-	}
-	cout << "\n";
-
-
-	solution.graph.writedot("nodepath_after.dot");
+	//solution.graph.writedot("nodepath_after.dot");
 
 }

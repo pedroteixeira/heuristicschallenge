@@ -30,10 +30,12 @@ typedef boost::adjacency_list_traits<boost::setS, boost::listS, boost::undirecte
 		vertex_descriptor;
 
 typedef boost::adjacency_list < boost::setS, boost::listS, boost::undirectedS,
-boost::property<boost::vertex_index_t, int,
-boost::property<boost::vertex_distance_t, int,
-boost::property<boost::vertex_predecessor_t, vertex_descriptor> > >,
-boost::property<boost::edge_weight_t, int> > BoostGraph;
+	boost::property<boost::vertex_index_t, int,
+	boost::property<boost::vertex_distance_t, int,
+	boost::property<boost::vertex_predecessor_t, vertex_descriptor> > >,
+	boost::property<boost::edge_weight_t, int,
+	boost::property<boost::edge_color_t, boost::default_color_type> >
+> BoostGraph;
 
 typedef boost::graph_traits<BoostGraph>::edge_descriptor Edge;
 typedef boost::graph_traits<BoostGraph>::vertex_descriptor Vertex;
@@ -53,6 +55,7 @@ typedef boost::multi_index::multi_index_container<Vertex,
 	> VertexSet;
 
 typedef VertexSet::nth_index<1>::type VertexHashSet;
+
 
 class Graph {
 public:
@@ -74,6 +77,7 @@ public:
 	int num_edges() const;
 	int get_degree(int v) const;
 	int get_degree(Vertex v) const;
+	bool has_cycle(std::list<Vertex>&);
 
 	void add_edge(int, int, int);
 	void remove_edge(Edge e);
