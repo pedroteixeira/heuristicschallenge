@@ -7,6 +7,7 @@
 
 #include <boost/graph/connected_components.hpp>
 #include <boost/property_map.hpp>
+#include <boost/format.hpp>
 
 #include "headers/steiner_nodesearch.hpp"
 #include "headers/steiner_solution.hpp"
@@ -33,7 +34,9 @@ void SteinerNodeLocalSearch::remove(SteinerSolution& solution) {
 		if(solution.in_key_nodes.get<1>().find(i) == solution.in_key_nodes.get<1>().end())
 		continue; //graph might have changed its in_key_nodes candidate list
 
+
 		remove_key_node(i, solution);
+
 		connect_graph(i, solution);
 
 		solution.find_mst_tree();
@@ -60,16 +63,27 @@ void SteinerNodeLocalSearch::remove(SteinerSolution& solution) {
 
 }
 
-void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& solution) {
 
+
+void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& solution) {
 	//find out how many disconnected components we made
 	DistanceMap components;
 	int num = boost::connected_components(solution.graph.boostgraph, components);
+	cout << "steiner node " << vertex_removed << " was removed and yielded " << num << " components.\n";
 
 	if (num == 1) {
-		//cerr << "graph is already connected.";
 		return;
 	}
+
+	//try cheap first
+	solution.grow_graph();
+	num = boost::connected_components(solution.graph.boostgraph, components);
+	if(num == 1) {
+		cout << "quick grow was enough to re-connect.\n";
+		return;
+	}
+
+	cout << "after quick grow there were left " << num << " components.\n";
 
 	map<int, list<Vertex> > vertices_by_component;
 	for (int j = 0; j < num; j++)
@@ -103,14 +117,11 @@ void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& 
 						best_way_to_connect[j][l].shortest_distance = distances[to];
 						best_way_to_connect[j][l].to_vertex = to;
 						best_way_to_connect[j][l].from_vertex = from;
-						best_way_to_connect[j][l].parents = parents;
 					}
 				}
 			}
 		}
 	}
-
-
 
 
 	//connect components via best paths
@@ -135,8 +146,28 @@ void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& 
 		}
 
 		disconnected.remove( to_component );
-		solution.add_path(best_way.from_vertex, best_way.to_vertex, best_way.parents);
+
+		vector<int> distances, parents;
+		boost::tie(distances, parents) = solution.instance.get_shortest_distances( best_way.from_vertex );
+
+		cout << "connecting components " << component << " and " << to_component << " from "
+						<< best_way.from_vertex << " to " << best_way.to_vertex << " with cost " << best_way.shortest_distance << "\n";
+
+
+		solution.add_path(best_way.from_vertex, best_way.to_vertex, parents);
+
+		boost::tie(distances, parents) = solution.instance.get_shortest_distances( vertex_removed );
+		cout << "distance from removed steiner " << vertex_removed << " to " << best_way.from_vertex;
+		cout << " " << distances[best_way.from_vertex];
+		cout << " and to " << best_way.to_vertex << " " << distances[best_way.to_vertex] << "\n";
+
+
 	}
+
+	cout << endl;
+	num = boost::connected_components(solution.graph.boostgraph, components);
+	assert(num == 1);
+
 }
 
 void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {

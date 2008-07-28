@@ -16,7 +16,6 @@ struct WayToConnect {
 	int shortest_distance;
 	int to_vertex;
 	int from_vertex;
-	std::vector<int> parents;
 
 public:
 	WayToConnect() {}

@@ -41,6 +41,7 @@ public:
 	void add_edge_from_original(int, int);
 	void add_path(int, int, std::vector<int>&);
 
+	void grow_graph();
 	void find_mst_tree();
 	void undo_last_mst();
 

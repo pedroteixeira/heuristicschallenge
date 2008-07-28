@@ -48,6 +48,7 @@ void SteinerSolution::find_mst_tree() {
 
 	//compact
 	compact_graph();
+
 }
 
 void SteinerSolution::compact_graph() {
@@ -112,17 +113,47 @@ void SteinerSolution::compact_graph() {
 			edges_removed++;
 		}
 	}
+
+	//temp sanity check
+	list<Vertex> cycle;
+	if (graph.has_cycle(cycle)) {
+		graph.writedot("treewithcycle.dot");
+
+		cout << "cycle is: ";
+		foreach(Vertex v, cycle) {
+			cout << graph.index_for_vertex(v) << ", ";
+		}
+
+		assert(false);
+	}
+
+	DistanceMap components;
+	int num = boost::connected_components(graph.boostgraph, components);
+	assert(num == 1);
+}
+
+void SteinerSolution::grow_graph() {
+	foreach(Vertex v, boost::vertices(graph.boostgraph)) {
+
+		int iv = graph.index_for_vertex(v);
+		foreach(Vertex n, boost::adjacent_vertices(instance.graph.get_vertex(iv), instance.graph.boostgraph)) {
+			int in = instance.graph.index_for_vertex(n);
+
+			if(graph.contains_vertex(in)) {
+				add_edge_from_original(iv, in);
+			}
+		}
+	}
 }
 
 void SteinerSolution::undo_last_mst() {
 	tree = undo_tree;
-
 	//restore all edges and vertices
 	typedef pair<int, int> IntPair;
 	foreach(IntPair edge, tree) {
 		add_edge_from_original(edge.first, edge.second);
 	}
-	compact_graph();
+	find_mst_tree();
 }
 
 bool SteinerSolution::is_terminal(int v) {
@@ -144,7 +175,7 @@ void SteinerSolution::add_path(int from, int to, vector<int>& parents) {
 		last_parent = parent;
 		parent = parents[parent];
 	}
-	//cout << "\n\n";
+	//cout << "\n";
 
 }
 

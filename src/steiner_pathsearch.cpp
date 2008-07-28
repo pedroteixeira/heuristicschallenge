@@ -11,7 +11,7 @@
 #include <stack>
 
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/undirected_dfs.hpp>
 #include <boost/graph/graph_utility.hpp>
 
 using namespace std;
@@ -34,24 +34,32 @@ public:
 				list<Vertex> tmp = path;
 				keypaths.push_back(tmp);
 				path.clear();
+
+				//cout << "starting new path from key-node " << graph.index_for_vertex(u) << "\n";
 			} else {
 				//start new from here
 				on_key_path = true;
+				//cout << "on key path \n";
 			}
 			//add key node to current path
+			//cout << "adding key-node " << graph.index_for_vertex(u) <<"\n";
+
 			path.push_back(u);
 			critical_stack.push(u);
-		} else if (on_key_path) {
+		}
+		else if (on_key_path) {
+
+			//cout << "adding steiner " << graph.index_for_vertex(u) <<"\n";
 			//add seiner node to current path
 			path.push_back(u);
+		} else {
+
+			//cout << "ignore steiner node off path " << graph.index_for_vertex(u) <<"\n";
+
 		}
 	}
 
-	void examine_edge(Edge e, const BoostGraph & g) {
-	}
-
 	void finish_vertex(Vertex u, const BoostGraph & g) {
-		path.clear();
 
 		//update track
 		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
@@ -59,12 +67,21 @@ public:
 			//throw away finished
 			if (!critical_stack.empty())
 				critical_stack.pop();
+			//cout << "finished key-node " << graph.index_for_vertex(u) <<"\n";
+		}
+
+		if(is_critical || graph.get_degree(u) == 1) {
+			path.clear();
 			//and restore previous critical (to deal with branches)
 			if (!critical_stack.empty()) {
 				path.push_back(critical_stack.top());
 				on_key_path = true;
+
+				//cout << "keep as current key-node " << graph.index_for_vertex(critical_stack.top()) <<"\n";
 			} else {
 				on_key_path = false; //I guess only necessary if graph is disconnected
+
+				//cout << "off key path\n";
 			}
 		}
 	}
@@ -73,12 +90,15 @@ public:
 	VertexSet& critical_set;
 	VertexHashSet& critical_hashed;
 	list<Vertex> path;
+	bool on_key_path;
 	list<list<Vertex> >& keypaths;
 	stack<Vertex> critical_stack;
-	bool on_key_path;
+
 };
 
 void SteinerPathLocalSearch::search(SteinerSolution& solution) {
+
+	solution.graph.writedot("solution_beforesearch.dot");
 
 	VertexSet critical_set;
 
@@ -95,7 +115,11 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 	list< list<Vertex> > keypaths;
 	dfs_time_visitor vis(solution.graph, critical_set, keypaths);
 
-	boost::depth_first_search(solution.graph.boostgraph, boost::visitor(vis));
+	boost::undirected_dfs(solution.graph.boostgraph, boost::root_vertex(*boost::vertices(solution.graph.boostgraph).first)
+						.visitor(vis)
+	           .edge_color_map(boost::get(boost::edge_color, solution.graph.boostgraph)));
+
+	cout << keypaths.size() << " key-node paths were found.\n";
 
 	foreach(list<Vertex> keypath, keypaths) {
 
@@ -113,9 +137,9 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 				}
 			}
 			previous = *iter;
-			//cout << solution.graph.index_for_vertex(*iter) << " - ";
+			cout << solution.graph.index_for_vertex(*iter) << " - ";
 		}
-		//cout << "[" << path_weight << "] \n";
+		cout << "[" << path_weight << "] \n";
 
 
 		//find shortest distance between two critical nodes and compare
@@ -144,13 +168,12 @@ void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Verte
 
 	//remove old path
 	cout << "removing old path: ";
-	Vertex previous;
 	foreach(Vertex v, keypath) {
-		if(v != keypath.front()) {
-			solution.graph.remove_edge(previous, v);
-			cout << solution.graph.index_for_vertex(previous) << ", " << solution.graph.index_for_vertex(v) << " - ";
+		cout << solution.graph.index_for_vertex(v) << ", ";
+		if(v != keypath.front() && v != keypath.back()) {
+			assert(solution.graph.get_degree(v) == 2);  //TODO: temp check
+			solution.graph.remove_vertex(v);
 		}
-		previous = v;
 	}
 	cout << "\n";
 

@@ -66,11 +66,10 @@ void SaSteiner::run() {
 			SteinerSolution new_solution(solution);
 
 			//key-path based neighborhood search
-			SteinerNodeLocalSearch::remove(new_solution);
 
-			//SteinerNodeLocalSearch::insert(new_solution);
-
-			//SteinerPathLocalSearch::search(new_solution);
+			//SteinerNodeLocalSearch::remove(new_solution);
+			SteinerNodeLocalSearch::insert(new_solution);
+			SteinerPathLocalSearch::search(new_solution);
 
 			int new_energy = new_solution.find_cost();
 
