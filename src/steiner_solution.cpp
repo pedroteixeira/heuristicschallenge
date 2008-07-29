@@ -152,23 +152,23 @@ void SteinerSolution::compact_graph() {
 	}
 
 	//temp sanity check
-	/*
-	 list<Vertex> cycle;
-	 if (graph.has_cycle(cycle)) {
-	 graph.writedot("treewithcycle.dot");
 
-	 cout << "cycle is: ";
-	 foreach(Vertex v, cycle) {
-	 cout << graph.index_for_vertex(v) << ", ";
-	 }
+	list<Vertex> cycle;
+	if (graph.has_cycle(cycle)) {
+		graph.writedot("treewithcycle.dot");
 
-	 assert(false);
-	 }
+		cout << "cycle is: ";
+		foreach(Vertex v, cycle) {
+			cout << graph.index_for_vertex(v) << ", ";
+		}
 
-	 DistanceMap components;
-	 int num = boost::connected_components(graph.boostgraph, components);
-	 assert(num == 1);
-	 */
+		assert(false);
+	}
+
+	DistanceMap components;
+	int num = boost::connected_components(graph.boostgraph, components);
+	assert(num == 1);
+
 }
 
 void SteinerSolution::grow_graph() {

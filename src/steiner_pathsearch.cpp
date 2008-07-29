@@ -155,13 +155,10 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 			exchange_path(solution, keypath, parents);
 			solution.find_mst_tree();
 
-			improved++;
-			//break;
+			improved++; //keep trying ?!
+
 		}
 	}
-
-	if(improved > 0)
-		cout << improved << " paths \n";
 
 	//cout << endl;
 }
