@@ -39,7 +39,8 @@ SteinerSolution SteinerHeuristics::generate_chins_solution(int root, Steiner& in
 	while (terminals_left.size() > 0) {
 
 		//randomize (give preference to closer terminals?)
-		boost::uniform_int<> range(0, terminals_left.size()-1);
+
+		boost::uniform_int<> range(0, terminals_left.size() - 1);
 		boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
 		int closest_terminal = terminals_left[die()];
 
@@ -67,7 +68,7 @@ SteinerSolution SteinerHeuristics::generate_chins_solution(int root, Steiner& in
 		 foreach(int v, vertices_in_solution) {
 		 int distance_to_v = distances[v];
 
-		 if(distance_to_v < closest_distance) {
+		 if (distance_to_v < closest_distance) {
 		 closest_distance = distance_to_v;
 		 closest_terminal = t;
 		 closest_vertex_in_tree = v;

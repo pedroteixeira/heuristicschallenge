@@ -28,7 +28,7 @@ SteinerGRASP::SteinerGRASP(Steiner& steiner) :
 
 void SteinerGRASP::run() {
 
-	size_t max_inner_iterations = 1;
+	size_t max_inner_iterations = 30;
 	int k = 0;
 
 	best_cost = INT_MAX;

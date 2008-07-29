@@ -19,19 +19,20 @@ using namespace std;
 class dfs_time_visitor: public boost::default_dfs_visitor {
 
 public:
-	dfs_time_visitor(Graph& g, VertexSet& cs, list<list<Vertex> >& paths) :
+	dfs_time_visitor(Graph& g, IntSet& cs, list<list<int> >& paths) :
 		graph(g), critical_set(cs), critical_hashed(cs.get<1> ()), on_key_path(false), keypaths(paths) {
 	}
 
 	void discover_vertex(Vertex u, const BoostGraph & g) {
 
-		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
+		int iu = graph.index_for_vertex(u);
+		bool is_critical = critical_hashed.find(iu) != critical_hashed.end();
 
 		if (is_critical) {
 			if (on_key_path) {
 				//end current path
-				path.push_back(u);
-				list<Vertex> tmp = path;
+				path.push_back(iu);
+				list<int> tmp = path;
 				keypaths.push_back(tmp);
 				path.clear();
 
@@ -44,14 +45,15 @@ public:
 			//add key node to current path
 			//cout << "adding key-node " << graph.index_for_vertex(u) <<"\n";
 
-			path.push_back(u);
-			critical_stack.push(u);
+
+			path.push_back( iu );
+			critical_stack.push( iu);
 		}
 		else if (on_key_path) {
 
 			//cout << "adding steiner " << graph.index_for_vertex(u) <<"\n";
 			//add seiner node to current path
-			path.push_back(u);
+			path.push_back(iu);
 		} else {
 
 			//cout << "ignore steiner node off path " << graph.index_for_vertex(u) <<"\n";
@@ -62,7 +64,9 @@ public:
 	void finish_vertex(Vertex u, const BoostGraph & g) {
 
 		//update track
-		bool is_critical = critical_hashed.find(u) != critical_hashed.end();
+		int iu = graph.index_for_vertex(u);
+		bool is_critical = critical_hashed.find(iu) != critical_hashed.end();
+
 		if (is_critical) {
 			//throw away finished
 			if (!critical_stack.empty())
@@ -87,30 +91,30 @@ public:
 	}
 
 	Graph& graph;
-	VertexSet& critical_set;
-	VertexHashSet& critical_hashed;
-	list<Vertex> path;
+	IntSet& critical_set;
+	IntHashSet& critical_hashed;
+	list<int> path;
 	bool on_key_path;
-	list<list<Vertex> >& keypaths;
-	stack<Vertex> critical_stack;
+	list<list<int> >& keypaths;
+	stack<int> critical_stack;
 
 };
 
 void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 
-	VertexSet critical_set;
+	IntSet critical_set;
 
 	//TODO: the following can be cached or done in pre-processing
 	//classify nodes
 	foreach(Vertex u, boost::vertices(solution.graph.boostgraph)) {
 		int iu = solution.graph.index_for_vertex(u);
 		if(boost::degree(u, solution.graph.boostgraph)> 2 || solution.is_terminal(iu)) //is critical
-		critical_set.push_back(u);
+		critical_set.push_back(iu);
 	}
 	assert(critical_set.size()> 0);
 
 	//build all key paths for this solution
-	list< list<Vertex> > keypaths;
+	list< list<int> > keypaths;
 	dfs_time_visitor vis(solution.graph, critical_set, keypaths);
 
 	boost::undirected_dfs(solution.graph.boostgraph, boost::root_vertex(*boost::vertices(solution.graph.boostgraph).first)
@@ -119,31 +123,29 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 
 	//cout << keypaths.size() << " key-node paths were found.\n";
 
-	foreach(list<Vertex> keypath, keypaths) {
+	int improved = 0;
+	foreach(list<int> keypath, keypaths) {
 
 		//calculate weight for this path
 		int path_weight = 0;
-		Vertex previous;
-		for(list<Vertex>::iterator iter = keypath.begin(); iter != keypath.end(); iter++) {
+		int previous;
+		for(list<int>::iterator iter = keypath.begin(); iter != keypath.end(); iter++) {
 			if(iter != keypath.begin()) {
-				Edge e; bool found;
-				boost::tie(e, found) = boost::edge(previous, *iter, solution.graph.boostgraph);
-				if(!found) { //TODO: understand!
-					cerr << "is graph disconected? " << solution.graph.index_for_vertex(previous) << ", " << solution.graph.index_for_vertex(*iter) << "\n";
+				if(!solution.graph.contains_edge(previous, *iter)) {
+					cerr << "is graph disconected? " << previous << ", " << *iter << "\n";
 				} else {
 					path_weight += solution.graph.get_edge_weight(*iter, previous);
 				}
 			}
 			previous = *iter;
-			//cout << solution.graph.index_for_vertex(*iter) << " - ";
 		}
-		//cout << "[" << path_weight << "] \n";
+
 
 
 		//find shortest distance between two critical nodes and compare
 		vector<int> distances, parents;
-		int from = solution.graph.index_for_vertex(keypath.front());
-		int to = solution.graph.index_for_vertex(keypath.back());
+		int from = keypath.front();
+		int to = keypath.back();
 		boost::tie(distances, parents) = solution.instance.get_shortest_distances(from);
 		int best_distance = distances[to];
 
@@ -153,37 +155,38 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 			exchange_path(solution, keypath, parents);
 			solution.find_mst_tree();
 
-			break;
+			improved++;
+			//break;
 		}
 	}
+
+	if(improved > 0)
+		cout << improved << " paths \n";
 
 	//cout << endl;
 }
 
-void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Vertex>& keypath, vector<int>& shortestpath) {
+void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<int>& keypath, vector<int>& shortestpath) {
 
-	//solution.graph.writedot("nodepath_before.dot");
 
 	//remove old path
 	//cout << "removing old path: ";
-	foreach(Vertex v, keypath) {
+	foreach(int v, keypath) {
 		//cout << solution.graph.index_for_vertex(v) << ", ";
 		if(v != keypath.front() && v != keypath.back()) {
 			if(solution.graph.get_degree(v) > 2) {
-				cerr << "something went wrong - non key-node with degree > 2 " << solution.graph.index_for_vertex(v) << "\n";
+				cerr << "something went wrong - non key-node with degree > 2 " << v << "\n";
 				solution.graph.writedot("oddkeynodepath.dot");
 				assert(false);
 			}
-			assert(solution.graph.get_degree(v) <= 2);  //TODO: temp check
 			solution.graph.remove_vertex(v);
 		}
 	}
-	//cout << "\n";
 
+	//cout << "\n";
 	//add new (better) path
 	//cout << "adding new path: ";
-	solution.add_path(solution.graph.index_for_vertex(keypath.front()), solution.graph.index_for_vertex(keypath.back()), shortestpath);
+	solution.add_path(keypath.front(), keypath.back(), shortestpath);
 
-	//solution.graph.writedot("nodepath_after.dot");
 
 }

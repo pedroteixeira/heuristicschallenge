@@ -18,7 +18,7 @@ public:
 
 
 private:
-	static void exchange_path(SteinerSolution&, std::list<Vertex>&, std::vector<int>&);
+	static void exchange_path(SteinerSolution&, std::list<int>&, std::vector<int>&);
 };
 
 #endif /* STEINER_PATHSEARCH_HPP_ */
