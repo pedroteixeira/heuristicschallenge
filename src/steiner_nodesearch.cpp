@@ -195,12 +195,11 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 		//insert new key node
 		insert_key_node(iu, tmp_solution);
 
+		tmp_solution.grow_graph();
 		tmp_solution.find_mst_tree();
 
 		//check if it was worth it
 		cost = tmp_solution.find_cost();
-
-		cout << " temp solution with cost " << cost << "\n";
 
 		if (cost < best_cost) {
 			best_cost = cost;
@@ -213,6 +212,7 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 
 	//keep best
 	insert_key_node(best_vertex_to_insert, solution);
+	solution.grow_graph();
 	solution.find_mst_tree();
 
 }

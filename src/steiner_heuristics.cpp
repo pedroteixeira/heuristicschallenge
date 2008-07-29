@@ -39,43 +39,43 @@ SteinerSolution SteinerHeuristics::generate_chins_solution(int root, Steiner& in
 	while (terminals_left.size() > 0) {
 
 		//randomize (give preference to closer terminals?)
-
-		boost::uniform_int<> range(0, terminals_left.size() - 1);
-		boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
-		int closest_terminal = terminals_left[die()];
-
-		vector<int> distances, parents;
-		boost::tie(distances, parents) = instance.get_shortest_distances(closest_terminal);
-
-		int closest_distance = INT_MAX, closest_vertex_in_tree;
-		foreach(int v, vertices_in_solution) {
-			int distance_to_v = distances[v];
-
-			if (distance_to_v < closest_distance) {
-				closest_distance = distance_to_v;
-				closest_vertex_in_tree = v;
-			}
-		}
-
-		//choose terminal closest to any of the vertices added
 		/*
-		 int closest_distance = INT_MAX;
-		 int closest_terminal, closest_vertex_in_tree;
-		 foreach(int t, terminals_left) {
-		 vector<int> distances, parents;
-		 boost::tie(distances, parents) = instance.get_shortest_distances(t);
+		 boost::uniform_int<> range(0, terminals_left.size() - 1);
+		 boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
+		 int closest_terminal = terminals_left[die()];
 
+		 vector<int> distances, parents;
+		 boost::tie(distances, parents) = instance.get_shortest_distances(closest_terminal);
+
+		 int closest_distance = INT_MAX, closest_vertex_in_tree;
 		 foreach(int v, vertices_in_solution) {
 		 int distance_to_v = distances[v];
 
 		 if (distance_to_v < closest_distance) {
 		 closest_distance = distance_to_v;
-		 closest_terminal = t;
 		 closest_vertex_in_tree = v;
 		 }
 		 }
-		 }
 		 */
+
+		//choose terminal closest to any of the vertices added
+
+		int closest_distance = INT_MAX;
+		int closest_terminal, closest_vertex_in_tree;
+		foreach(int t, terminals_left) {
+			vector<int> distances, parents;
+			boost::tie(distances, parents) = instance.get_shortest_distances(t);
+
+			foreach(int v, vertices_in_solution) {
+				int distance_to_v = distances[v];
+
+				if (distance_to_v < closest_distance) {
+					closest_distance = distance_to_v;
+					closest_terminal = t;
+					closest_vertex_in_tree = v;
+				}
+			}
+		}
 
 		terminals_left.remove(closest_terminal);
 
@@ -91,10 +91,8 @@ SteinerSolution SteinerHeuristics::generate_chins_solution(int root, Steiner& in
 
 			parent = instance.get_parent_in_shortest_path(closest_terminal, parent);
 		};
-
 	}
 
-	//cout << "creating subgraph for solution..."<< endl;
 
 	//create a sub graph structure with only the vertices added so far
 	foreach(int v, vertices_in_solution) {
@@ -120,5 +118,10 @@ SteinerSolution SteinerHeuristics::generate_chins_solution(int root, Steiner& in
 
 	//initialize
 	solution.find_mst_tree();
+
+	//Experiment
+	solution.grow_graph();
+	solution.find_mst_tree();
+
 	return solution;
 }
