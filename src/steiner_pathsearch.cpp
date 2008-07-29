@@ -117,7 +117,7 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 						.visitor(vis)
 	           .edge_color_map(boost::get(boost::edge_color, solution.graph.boostgraph)));
 
-	cout << keypaths.size() << " key-node paths were found.\n";
+	//cout << keypaths.size() << " key-node paths were found.\n";
 
 	foreach(list<Vertex> keypath, keypaths) {
 
@@ -148,7 +148,7 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 		int best_distance = distances[to];
 
 		if(best_distance < path_weight) {
-			cout << "!! best distance FOUND is " << best_distance << " over " << path_weight << ".\n";
+			//cout << "!! best distance FOUND is " << best_distance << " over " << path_weight << ".\n";
 
 			exchange_path(solution, keypath, parents);
 			solution.find_mst_tree();
@@ -157,7 +157,7 @@ void SteinerPathLocalSearch::search(SteinerSolution& solution) {
 		}
 	}
 
-	cout << endl;
+	//cout << endl;
 }
 
 void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Vertex>& keypath, vector<int>& shortestpath) {

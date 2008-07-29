@@ -28,7 +28,7 @@ SteinerGRASP::SteinerGRASP(Steiner& steiner) :
 
 void SteinerGRASP::run() {
 
-	size_t max_inner_iterations = 10;
+	size_t max_inner_iterations = 1;
 	int k = 0;
 
 	best_cost = INT_MAX;
@@ -43,14 +43,19 @@ void SteinerGRASP::run() {
 		//int root = die();
 		int root = i;
 		for (size_t j = 0; j < max_inner_iterations; j++) {
+
 			SteinerSolution solution = SteinerHeuristics::generate_chins_solution(root, instance);
 
 			int cost = solution.find_cost();
 
-			//SteinerNodeLocalSearch::insert(solution);
-			//int insert_cost = solution.find_cost();
-			//cout << "cost when applying node local search: " << insert_cost << "\n";
-			//SteinerPathLocalSearch::search(solution);
+			SteinerPathLocalSearch::search(solution);
+
+			int ls_cost = solution.find_cost();
+
+			if(ls_cost < cost) {
+				cout << "solution was improved with path ls " << ls_cost << " from " << cost << "\n";
+				cost = ls_cost;
+			}
 
 			if (cost < best_cost) {
 				best_cost = cost;
