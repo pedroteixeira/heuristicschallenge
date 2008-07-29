@@ -165,7 +165,7 @@ void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Verte
 	//solution.graph.writedot("nodepath_before.dot");
 
 	//remove old path
-	cout << "removing old path: ";
+	//cout << "removing old path: ";
 	foreach(Vertex v, keypath) {
 		//cout << solution.graph.index_for_vertex(v) << ", ";
 		if(v != keypath.front() && v != keypath.back()) {
@@ -181,7 +181,7 @@ void SteinerPathLocalSearch::exchange_path(SteinerSolution& solution, list<Verte
 	//cout << "\n";
 
 	//add new (better) path
-	cout << "adding new path: ";
+	//cout << "adding new path: ";
 	solution.add_path(solution.graph.index_for_vertex(keypath.front()), solution.graph.index_for_vertex(keypath.back()), shortestpath);
 
 	//solution.graph.writedot("nodepath_after.dot");
