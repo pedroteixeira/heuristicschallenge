@@ -28,7 +28,7 @@ SteinerGRASP::SteinerGRASP(Steiner& steiner) :
 
 void SteinerGRASP::run() {
 
-	size_t max_inner_iterations = 5;
+	size_t max_inner_iterations = 1;
 	int k = 0;
 
 	best_cost = INT_MAX;
@@ -39,7 +39,7 @@ void SteinerGRASP::run() {
 	boost::uniform_int<> range(0, instance.V - 1);
 	boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
 
-	for (size_t i = 0; i < (size_t)instance.V; i++) {
+	for (size_t i = 0; i < (size_t) instance.V; i++) {
 		//int root = die();
 		int root = i;
 		for (size_t j = 0; j < max_inner_iterations; j++) {
@@ -48,24 +48,21 @@ void SteinerGRASP::run() {
 
 			int cost = solution.find_cost();
 
-			SteinerNodeLocalSearch::insert(solution);
-			int nls_cost = solution.find_cost();
-
-			if(nls_cost < cost) {
-				cost = nls_cost;
-				cout << "nls better with " << nls_cost << " over " << cost << "\n";
-			}
-
-
 			SteinerPathLocalSearch::search(solution);
 			int ls_cost = solution.find_cost();
 
-			if(ls_cost < cost) {
+			if (ls_cost < cost) {
+				cout << "ls better with " << ls_cost << " over " << cost << "\n";
 				cost = ls_cost;
 			}
 
+			SteinerNodeLocalSearch::remove(solution);
+			int nls_cost = solution.find_cost();
 
-
+			if (nls_cost < cost) {
+				cout << "nls better with " << nls_cost << " over " << cost << "\n";
+				cost = nls_cost;
+			}
 
 			if (cost < best_cost) {
 				best_cost = cost;

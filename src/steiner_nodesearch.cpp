@@ -16,48 +16,42 @@
 using namespace std;
 
 void SteinerNodeLocalSearch::remove(SteinerSolution& solution) {
-	if (solution.in_key_nodes.size() == 0)
-		return;
 
-	cout << solution.in_key_nodes.size() << " steiner nodes candidates for removal.\n";
-
-	//try all out vertices (randomize)
-	vector<int> tmp_vertices(solution.in_key_nodes.size());
-	foreach(int v, solution.in_key_nodes) {
-		tmp_vertices.push_back(v);
+	IntSet candidates_steiner_nodes;
+	foreach(Vertex u, boost::vertices(solution.instance.graph.boostgraph)) {
+		int iu = solution.instance.graph.index_for_vertex(u);
+		if(solution.graph.contains_vertex(iu) && solution.graph.get_degree(iu) > 2 ) {
+			candidates_steiner_nodes.push_back(iu);
+		}
 	}
-	random_shuffle(tmp_vertices.begin(), tmp_vertices.end());
 
 	int best_cost = INT_MAX, cost;
 	int best_vertex_to_remove;
-	foreach(int i, tmp_vertices) {
-		if(solution.in_key_nodes.get<1>().find(i) == solution.in_key_nodes.get<1>().end())
-		continue; //graph might have changed its in_key_nodes candidate list
+	foreach(int i, candidates_steiner_nodes) {
 
+		SteinerSolution tmp_solution = solution;
 
-		remove_key_node(i, solution);
+		remove_key_node(i, tmp_solution);
 
-		connect_graph(i, solution);
+		connect_graph(i, tmp_solution);
 
-		solution.find_mst_tree();
-		cost = solution.find_cost();
+		tmp_solution.grow_graph();
+		tmp_solution.find_mst_tree();
+		cost = tmp_solution.find_cost();
 
 		if (cost < best_cost) {
 			best_cost = cost;
 			best_vertex_to_remove = i;
 		}
 
-		//undo insert
-		insert_key_node(i, solution);
-		solution.undo_last_mst();
-
 	}
 
 	//keep best
-	if(best_cost != INT_MAX) {
-		cout << "removing best steiner node of this round " << best_vertex_to_remove << " yield cost " << best_cost << "\n";
+	if (best_cost != INT_MAX) {
+		//cout << "removing best steiner node of this round " << best_vertex_to_remove << " yield cost " << best_cost << "\n";
 		remove_key_node(best_vertex_to_remove, solution);
 		connect_graph(best_vertex_to_remove, solution);
+		solution.grow_graph();
 		solution.find_mst_tree();
 	}
 
@@ -93,23 +87,23 @@ void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& 
 	}
 
 	//find out best ways to connect components
-	map< int, map<int, WayToConnect> > best_way_to_connect;
+	map<int, map<int, WayToConnect> > best_way_to_connect;
 
-	for(int j=0;j<num;j++) {
-		best_way_to_connect.insert( make_pair(j, map<int, WayToConnect>()) );
+	for (int j = 0; j < num; j++) {
+		best_way_to_connect.insert(make_pair(j, map<int, WayToConnect> ()));
 
 		foreach(Vertex u, vertices_by_component[j]) {
 			vector<int> distances, parents;
 			int from = solution.graph.index_for_vertex(u);
 			boost::tie(distances, parents) = solution.instance.get_shortest_distances( from );
 
-			for(int l=j+1;l<num;l++) {
+			for (int l = j + 1; l < num; l++) {
 				int shortest_distance_to_connect = INT_MAX;
-				best_way_to_connect[j].insert( make_pair(l, WayToConnect() ));
+				best_way_to_connect[j].insert(make_pair(l, WayToConnect()));
 
 				foreach(Vertex v, vertices_by_component[l]) {
 					int to = solution.graph.index_for_vertex(v);
-					if(distances[to] < shortest_distance_to_connect) {
+					if (distances[to] < shortest_distance_to_connect) {
 
 						shortest_distance_to_connect = distances[to];
 						best_way_to_connect[j][l].shortest_distance = distances[to];
@@ -123,26 +117,29 @@ void SteinerNodeLocalSearch::connect_graph(int vertex_removed, SteinerSolution& 
 
 	//connect components via best paths
 	list<int> disconnected;
-	for(int j=0;j<num;j++) {
+	for (int j = 0; j < num; j++) {
 		disconnected.push_back(j);
 	}
 
-	while(disconnected.size()> 0) {
+	while (disconnected.size() > 0) {
 
-		int component = disconnected.front(); disconnected.pop_front();
+		int component = disconnected.front();
+		disconnected.pop_front();
 
-		int shortest_distance = INT_MAX, to_component; WayToConnect best_way;
-		for(int j=0;j<num;j++) {
-			if(j == component) continue;
+		int shortest_distance = INT_MAX, to_component;
+		WayToConnect best_way;
+		for (int j = 0; j < num; j++) {
+			if (j == component)
+				continue;
 			int from = min(j, component), to = max(j, component);
 			WayToConnect best_way_for_these = best_way_to_connect[from][to];
-			if(best_way_for_these.shortest_distance < shortest_distance) {
+			if (best_way_for_these.shortest_distance < shortest_distance) {
 				best_way = best_way_for_these;
 				to_component = j;
 			}
 		}
 
-		disconnected.remove( to_component );
+		disconnected.remove(to_component);
 
 		vector<int> distances, parents;
 		boost::tie(distances, parents) = solution.instance.get_shortest_distances( best_way.from_vertex );
@@ -174,8 +171,8 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 		int iu = solution.instance.graph.index_for_vertex(u);
 		if(!solution.graph.contains_vertex(iu)) {
 			//restrict more //theses nodes seem more interesting (better heuristic??)
-			if(boost::degree(u, solution.instance.graph.boostgraph) > 2)
-				candidates_steiner_nodes.push_back(iu);
+			if(boost::degree(u, solution.instance.graph.boostgraph)> 2)
+			candidates_steiner_nodes.push_back(iu);
 		}
 	}
 
@@ -187,8 +184,8 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 	int best_cost = INT_MAX, cost, original_cost = solution.find_cost();
 	int best_vertex_to_insert;
 	foreach(int iu, candidates_steiner_nodes) {
-		if(solution.graph.contains_vertex(iu))
-		continue; //graph might have changed its structure?
+		if (solution.graph.contains_vertex(iu))
+			continue; //graph might have changed its structure?
 
 		SteinerSolution tmp_solution = solution;
 
@@ -205,7 +202,7 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 			best_cost = cost;
 			best_vertex_to_insert = iu;
 
-			if(cost < original_cost)
+			if (cost < original_cost)
 				break; //does not need to keep going, right?
 		}
 	}
@@ -232,19 +229,17 @@ void SteinerNodeLocalSearch::insert_key_node(int iu, SteinerSolution& solution) 
 		solution.add_path(iu, t, parents);
 	}
 
-
 	//add all paths
 	/*
-	list<int> vertices_to_connect;
-	foreach(Vertex v, boost::vertices(solution.graph.boostgraph)) {
-		vertices_to_connect.push_back( solution.graph.index_for_vertex(v) );
-	}
+	 list<int> vertices_to_connect;
+	 foreach(Vertex v, boost::vertices(solution.graph.boostgraph)) {
+	 vertices_to_connect.push_back( solution.graph.index_for_vertex(v) );
+	 }
 
-	foreach(int iv, vertices_to_connect) {
-		solution.add_path(iu, iv, parents);
-	}
-	*/
-
+	 foreach(int iv, vertices_to_connect) {
+	 solution.add_path(iu, iv, parents);
+	 }
+	 */
 
 	solution.grow_graph();
 
