@@ -28,34 +28,40 @@ SteinerGRASP::SteinerGRASP(Steiner& steiner) :
 
 void SteinerGRASP::run() {
 
-	int lamda = 1.01;
+	size_t max_inner_iterations = 10;
+	int k = 0;
 
-	best_cost = INT_MAX / lamda;
+	best_cost = INT_MAX;
 	size_t best_root;
-	for (size_t i = 0; i < instance.terminals.size(); i++) {
-		if (i != 14)
-			continue;
+	boost::timer t0;
 
-		SteinerSolution solution = SteinerHeuristics::generate_chins_solution(i, instance);
+	//pick random initial terminal
+	boost::uniform_int<> range(0, instance.V - 1);
+	boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
 
-		int cost = solution.find_cost();
-		cout << "cost of chins: " << cost << "\n";
+	for (size_t i = 0; i < (size_t)instance.V; i++) {
+		//int root = die();
+		int root = i;
+		for (size_t j = 0; j < max_inner_iterations; j++) {
+			SteinerSolution solution = SteinerHeuristics::generate_chins_solution(root, instance);
 
-		SteinerNodeLocalSearch::insert(solution);
-		int insert_cost = solution.find_cost();
+			int cost = solution.find_cost();
 
-		cout << "cost when applying node local search: " << insert_cost << "\n";
+			//SteinerNodeLocalSearch::insert(solution);
+			//int insert_cost = solution.find_cost();
+			//cout << "cost when applying node local search: " << insert_cost << "\n";
+			//SteinerPathLocalSearch::search(solution);
 
-		//SteinerPathLocalSearch::search(solution);
+			if (cost < best_cost) {
+				best_cost = cost;
+				best_root = root;
+				cout << "*** new current best " << cost << " with " << root << "\n";
+			}
 
-		cost = min(insert_cost, cost);
-		if (cost < best_cost) {
-			best_cost = cost;
-			best_root = i;
+			k++;
 		}
-
-		cout << "\n\n";
 	}
 
+	cout << "GRASP finished in " << k << " total iterations in " << t0.elapsed() << " seconds. \n";
 	cout << "best found was " << best_cost << " with root terminal " << best_root << "\n";
 }

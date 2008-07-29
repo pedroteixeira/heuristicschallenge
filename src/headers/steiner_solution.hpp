@@ -31,6 +31,7 @@ public:
 	IntSet virtual_terminals;
 
 	bool is_terminal(int);
+	bool is_terminal(Vertex);
 	int find_cost();
 
 	bool is_out_key_node(int i);

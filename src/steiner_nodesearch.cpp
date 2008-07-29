@@ -192,16 +192,10 @@ void SteinerNodeLocalSearch::insert(SteinerSolution& solution) {
 
 		SteinerSolution tmp_solution = solution;
 
-		//tmp_solution.graph.writedot("before_insert.dot");
-
 		//insert new key node
 		insert_key_node(iu, tmp_solution);
 
-		//tmp_solution.graph.writedot("after_insert.dot");
-
 		tmp_solution.find_mst_tree();
-
-		//tmp_solution.graph.writedot("after_trim.dot");
 
 		//check if it was worth it
 		cost = tmp_solution.find_cost();

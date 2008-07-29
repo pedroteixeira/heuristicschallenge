@@ -60,23 +60,20 @@ public:
 
 	void finish_vertex(Vertex u, const BoostGraph & g) {
 		int iu = solution.graph.index_for_vertex(u);
-		if (!solution.is_terminal(iu)) {
+		if (degree[iu] <= 1 && !solution.is_terminal(iu)) {
 
-			if (degree[iu] <= 1) {
-
-				foreach(Vertex n, boost::adjacent_vertices(u, g)) {
-					int in = solution.graph.index_for_vertex(n);
-					degree[in] = degree[in]-1;
-				}
-
-				vertices_to_prune.push_back(u);
+			foreach(Vertex n, boost::adjacent_vertices(u, g)) {
+				int in = solution.graph.index_for_vertex(n);
+				degree[in] = degree[in]-1;
 			}
+
+			vertices_to_prune.push_back(u);
 		}
 	}
 
 	SteinerSolution& solution;
 	list<Vertex>& vertices_to_prune;
-	map<int,int>& degree;
+	map<int, int>& degree;
 };
 
 void SteinerSolution::compact_graph() {
@@ -97,8 +94,9 @@ void SteinerSolution::compact_graph() {
 		bool exists_in_tree = false;
 		typedef pair<int, int> IntPair;
 		foreach(IntPair edge, tree) {
-			if((edge.first == iu && edge.second == iv) || (edge.first == iv && edge.second == iu)) {
-				exists_in_tree = true; break;
+			if ((edge.first == iu && edge.second == iv) || (edge.first == iv && edge.second == iu)) {
+				exists_in_tree = true;
+				break;
 			}
 		}
 
@@ -107,7 +105,6 @@ void SteinerSolution::compact_graph() {
 			edges_removed++;
 		}
 	}
-
 
 	//prune graph
 
@@ -118,7 +115,9 @@ void SteinerSolution::compact_graph() {
 
 	list<Vertex> vertices_to_prune;
 	prune_visitor vis(*this, degree, vertices_to_prune);
-	boost::depth_first_search(graph.boostgraph, boost::visitor(vis));
+	boost::undirected_dfs(graph.boostgraph,
+			boost::root_vertex(*boost::vertices(graph.boostgraph).first) .visitor(vis).edge_color_map(boost::get(
+					boost::edge_color, graph.boostgraph)));
 
 	foreach(Vertex u, vertices_to_prune) {
 		graph.remove_vertex(u);
@@ -126,7 +125,15 @@ void SteinerSolution::compact_graph() {
 
 	//cout << vertices_to_prune.size() << " vertices pruned from tree.\n";
 
-
+	//check TODO: find out how to prune better
+	boost::graph_traits<BoostGraph>::vertex_iterator vi, vi_end, vi_next;
+	boost::tie(vi, vi_end) = boost::vertices(graph.boostgraph);
+	for (vi_next = vi; vi != vi_end; vi = vi_next) {
+		++vi_next;
+		if (boost::degree(*vi, graph.boostgraph) <= 1 && !is_terminal(*vi)) {
+			graph.remove_vertex(*vi);
+		}
+	}
 
 	//trim tree structure
 
@@ -138,7 +145,6 @@ void SteinerSolution::compact_graph() {
 		int iu = (*iter).first;
 		int iv = (*iter).second;
 
-		IntSet vertices_to_remove;
 		if (!graph.contains_vertex(iu) || !graph.contains_vertex(iv)) {
 			tree.erase(iter);
 			edges_removed++;
@@ -147,22 +153,22 @@ void SteinerSolution::compact_graph() {
 
 	//temp sanity check
 	/*
-	list<Vertex> cycle;
-	if (graph.has_cycle(cycle)) {
-		graph.writedot("treewithcycle.dot");
+	 list<Vertex> cycle;
+	 if (graph.has_cycle(cycle)) {
+	 graph.writedot("treewithcycle.dot");
 
-		cout << "cycle is: ";
-		foreach(Vertex v, cycle) {
-			cout << graph.index_for_vertex(v) << ", ";
-		}
+	 cout << "cycle is: ";
+	 foreach(Vertex v, cycle) {
+	 cout << graph.index_for_vertex(v) << ", ";
+	 }
 
-		assert(false);
-	}
+	 assert(false);
+	 }
 
-	DistanceMap components;
-	int num = boost::connected_components(graph.boostgraph, components);
-	assert(num == 1);
-	*/
+	 DistanceMap components;
+	 int num = boost::connected_components(graph.boostgraph, components);
+	 assert(num == 1);
+	 */
 }
 
 void SteinerSolution::grow_graph() {
@@ -191,6 +197,10 @@ void SteinerSolution::undo_last_mst() {
 
 bool SteinerSolution::is_terminal(int v) {
 	return instance.is_terminal(v) || (virtual_terminals.get<1> ().find(v) != virtual_terminals.get<1> ().end());
+}
+
+bool SteinerSolution::is_terminal(Vertex v) {
+	return is_terminal(graph.index_for_vertex(v));
 }
 
 void SteinerSolution::add_edge_from_original(int u, int v) {
@@ -236,7 +246,7 @@ bool SteinerSolution::is_new_candidate_for_out_key_node(int i) {
 		neighboors_connected++;
 	}
 
-	return neighboors_connected> 1;
+	return neighboors_connected > 1;
 }
 
 void SteinerSolution::update_candidates_out_key_nodes(int i) {
