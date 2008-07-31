@@ -310,7 +310,7 @@ void SteinerSolution::writetex(string path) {
 
 				tex_file << "\"" << iu << "\"-\"" << iv << "\" \n";
 			}
-			tex_file << "} } \n";
+			tex_file << "} \n";
 			tex_file << "\\end{document} \n";
 }
 
