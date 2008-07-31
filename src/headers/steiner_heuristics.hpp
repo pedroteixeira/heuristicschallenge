@@ -13,7 +13,13 @@
 
 class SteinerHeuristics {
 public:
-	static SteinerSolution generate_chins_solution(int, Steiner&);
+
+	static SteinerSolution generate_chins_solution(const std::list<int>&, Steiner&);
 	static SteinerSolution generate_chins_solution(Steiner&);
+
+	static SteinerSolution generate_network_distance_solution(Steiner&);
+
+private:
+	Steiner& steiner;
 };
 #endif /* STEINER_HEURISTICS_HPP_ */

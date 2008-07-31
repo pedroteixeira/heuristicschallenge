@@ -26,6 +26,8 @@ public:
 	static void insert(SteinerSolution&);
 	static void remove(SteinerSolution&);
 
+	SteinerSolution key_node_insert(const SteinerSolution&);
+
 
 private:
 	static void connect_graph(int, SteinerSolution&); // TODO: move to sution

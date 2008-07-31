@@ -24,11 +24,10 @@ int main() {
 	//log4cxx::BasicConfigurator::configure();
 
 	const string steiner_1_path = "data/steiner-1-2353.stp"; //0.2 para < 2420, 0.5 para < 2390
+	const string steiner_2_path = "data/steiner-2-3413.stp"; //0.2 para < 3495, 0.5 para < 3465
 
-	//SaSteiner sa_steiner(steiner_1_path);
-	//sa_steiner.run();
 
-	Steiner instance(steiner_1_path);
+	Steiner instance(steiner_2_path);
 	SteinerGRASP grasp(instance);
 	grasp.run();
 

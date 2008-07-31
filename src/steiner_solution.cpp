@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include <stack>
 
 #include <boost/graph/adjacency_list.hpp>
@@ -153,21 +154,6 @@ void SteinerSolution::compact_graph() {
 
 	//temp sanity check
 
-	list<Vertex> cycle;
-	if (graph.has_cycle(cycle)) {
-		graph.writedot("treewithcycle.dot");
-
-		cout << "cycle is: ";
-		foreach(Vertex v, cycle) {
-			cout << graph.index_for_vertex(v) << ", ";
-		}
-
-		assert(false);
-	}
-
-	DistanceMap components;
-	int num = boost::connected_components(graph.boostgraph, components);
-	assert(num == 1);
 
 }
 
@@ -223,100 +209,12 @@ void SteinerSolution::add_path(int from, int to, vector<int>& parents) {
 }
 
 /**
- * mantain out vertices
- */
-bool SteinerSolution::is_new_candidate_for_out_key_node(int i) {
-
-	bool is_already_in_solution = graph.contains_vertex(i);
-	if (is_already_in_solution) //excludes terminals also
-		return false;
-
-	bool already_added_as_candidate = find(out_key_nodes.begin(), out_key_nodes.end(), i) != out_key_nodes.end(); //TODO: can make it O(1) with hashed index
-	if (already_added_as_candidate)
-		return false;
-
-	//check if it can connect to at least 2 neighboors in this solution
-	int neighboors_connected = 0;
-	foreach(Vertex n_in_original, boost::adjacent_vertices(instance.graph.get_vertex(i), instance.graph.boostgraph)) {
-
-		int index_n = instance.graph.index_for_vertex(n_in_original);
-		bool n_exists_in_solution = graph.contains_vertex(index_n);
-
-		if(n_exists_in_solution && boost::degree(graph.get_vertex(index_n), graph.boostgraph)> 0)
-		neighboors_connected++;
-	}
-
-	return neighboors_connected > 1;
-}
-
-void SteinerSolution::update_candidates_out_key_nodes(int i) {
-
-	foreach(Vertex n, boost::adjacent_vertices(instance.graph.get_vertex(i), instance.graph.boostgraph)) {
-		int index_n = instance.graph.index_for_vertex(n);
-		if (is_new_candidate_for_out_key_node(index_n)) {
-			out_key_nodes.push_back(index_n);
-		} else {
-			out_key_nodes.remove(index_n);
-		}
-	}
-}
-
-void SteinerSolution::build_candidates_out_key_nodes() {
-	out_key_nodes.clear();
-
-	//select those nodes when added would have edges to connect to solution
-	for (int i = 0; i < instance.V; i++) {
-		if (is_new_candidate_for_out_key_node(i)) {
-			out_key_nodes.push_back(i);
-		}
-	}
-
-	cout << "built list of " << out_key_nodes.size() << " candidates for 'out vertices'." << endl;
-}
-
-void SteinerSolution::on_key_node_inserted(int i) {
-	virtual_terminals.push_back(i);
-	out_key_nodes.remove(i);
-	in_key_nodes.push_back(i);
-	update_candidates_out_key_nodes(i);
-
-}
-
-void SteinerSolution::on_key_node_removed(int i) {
-	virtual_terminals.remove(i);
-	out_key_nodes.push_back(i);
-	in_key_nodes.remove(i);
-	update_candidates_out_key_nodes(i);
-}
-
-bool SteinerSolution::is_out_key_node(int i) {
-	return out_key_nodes.get<1> ().find(i) != out_key_nodes.get<1> ().end();
-}
-
-bool SteinerSolution::is_in_key_node(int i) {
-	return in_key_nodes.get<1> ().find(i) != in_key_nodes.get<1> ().end();
-}
-
-/**
- * steiner nodes already in solution
- */
-
-void SteinerSolution::build_candidates_in_key_nodes() {
-	foreach(Vertex v, boost::vertices(graph.boostgraph)) {
-		int iv = graph.index_for_vertex(v);
-		bool is_steiner = !is_terminal(iv);
-
-		if(is_steiner && graph.get_degree(v)> 2)
-		in_key_nodes.push_back(iv);
-	}
-}
-
-/**
  * Find cost of current solution.
  */
-int SteinerSolution::find_cost() {
+int SteinerSolution::find_cost() const {
 	int total = 0;
 	typedef pair<int, int> IntPair;
+
 	foreach(IntPair edge, tree) {
 		total += graph.get_edge_weight(edge.first, edge.second);
 	}
@@ -348,8 +246,6 @@ void SteinerSolution::copy(const SteinerSolution& source, SteinerSolution& to) {
 	//cout << "copying SteinerSolution" << endl;
 
 	to.instance = source.instance;
-	to.out_key_nodes = source.out_key_nodes;
-	to.in_key_nodes = source.in_key_nodes;
 
 	to.tree = source.tree;
 
@@ -358,5 +254,63 @@ void SteinerSolution::copy(const SteinerSolution& source, SteinerSolution& to) {
 	assert(to.tree.size() == source.tree.size());
 	assert(boost::num_vertices(source.graph.boostgraph) == boost::num_vertices(to.graph.boostgraph));
 	assert(boost::num_edges(source.graph.boostgraph) == boost::num_edges(to.graph.boostgraph));
+}
+
+void SteinerSolution::check_integrity() {
+	foreach(int terminal, instance.terminals) {
+		assert(graph.contains_vertex(terminal));
+	}
+
+	list<Vertex> cycle;
+	if (graph.has_cycle(cycle)) {
+		graph.writedot("treewithcycle.dot");
+
+		cout << "cycle is: ";
+		foreach(Vertex v, cycle) {
+			cout << graph.index_for_vertex(v) << ", ";
+		}
+
+		assert(false);
+	}
+
+	DistanceMap components;
+	int num = boost::connected_components(graph.boostgraph, components);
+	assert(num == 1);
+}
+
+void SteinerSolution::writetext(string path) {
+
+}
+
+void SteinerSolution::writetex(string path) {
+	ofstream tex_file(path.c_str());
+
+	tex_file << "\\documentclass[12pt]{amsart} \n";
+	tex_file << "\\usepackage[all,dvips,arc,curve,color,frame]{xy} \n";
+	tex_file << "\\newxyColor{pink}{1.0 0.4 0.5}{rgb}{} \n";
+
+	tex_file << "\\begin{document} \n";
+
+	tex_file << "\\xygraph{ \n";
+	tex_file << "!{<0mm,0mm>;<1mm,0mm>:<0mm,1mm>::} \n";
+
+	foreach(Vertex u, boost::vertices(graph.boostgraph)) {
+		int iu = graph.index_for_vertex(u);
+
+		VertexInfo info = instance.vertices_info[iu];
+		tex_file << " !{(" << info.x << "," << info.y << ")}*+{\\bullet}=\"" << iu << "\" \n";
+	}
+
+	foreach(Edge
+			e, boost::edges(graph.boostgraph)) {
+				Vertex u = boost::source(e, graph.boostgraph);
+				Vertex v = boost::target(e, graph.boostgraph);
+				int iu = graph.index_for_vertex(u);
+				int iv = graph.index_for_vertex(v);
+
+				tex_file << "\"" << iu << "\"-\"" << iv << "\" \n";
+			}
+			tex_file << "} } \n";
+			tex_file << "\\end{document} \n";
 }
 

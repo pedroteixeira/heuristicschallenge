@@ -11,16 +11,62 @@
 
 #include "headers/steiner_nodesearch.hpp"
 #include "headers/steiner_solution.hpp"
+#include "headers/steiner_heuristics.hpp"
 #include "headers/graph.hpp"
 
 using namespace std;
+
+SteinerSolution SteinerNodeLocalSearch::key_node_insert(const SteinerSolution& solution) {
+
+	list<int> virtual_terminals;
+	list<int> candidates_key_nodes;
+
+	//build list for candidates and current key nodes
+	foreach(Vertex u, boost::vertices(solution.instance.graph.boostgraph)) {
+		int iu = solution.instance.graph.index_for_vertex(u);
+
+		if(!solution.instance.is_terminal(iu)) {
+			if(solution.graph.contains_vertex(iu) && solution.graph.get_degree(iu)> 2) {
+				virtual_terminals.push_back(iu);
+			}
+			//original not that is not a key node in current solution
+			else {
+				candidates_key_nodes.push_back(iu);
+			}
+		}
+	}
+
+	int original_cost = solution.find_cost();
+
+	//try insert all as key-node
+	foreach(int candidate, candidates_key_nodes) {
+		virtual_terminals.push_back(candidate);
+		SteinerSolution tmp = SteinerHeuristics::generate_chins_solution(virtual_terminals, solution.instance);
+
+		int new_cost = tmp.find_cost();
+		if (new_cost < original_cost) {
+			return tmp;
+		}
+
+		virtual_terminals.pop_back();
+	}
+
+	return solution;
+
+	/*
+	 //pick non key-node to insert
+	 boost::uniform_int<> range(0, instance.V - 1);
+	 boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
+	 int i = die();*/
+
+}
 
 void SteinerNodeLocalSearch::remove(SteinerSolution& solution) {
 
 	IntSet candidates_steiner_nodes;
 	foreach(Vertex u, boost::vertices(solution.instance.graph.boostgraph)) {
 		int iu = solution.instance.graph.index_for_vertex(u);
-		if(solution.graph.contains_vertex(iu) && solution.graph.get_degree(iu) > 2 ) {
+		if(solution.graph.contains_vertex(iu) && solution.graph.get_degree(iu)> 2 ) {
 			candidates_steiner_nodes.push_back(iu);
 		}
 	}

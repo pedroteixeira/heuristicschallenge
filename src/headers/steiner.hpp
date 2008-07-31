@@ -29,6 +29,7 @@ public:
 	std::pair<std::vector<int>, std::vector<int> > get_shortest_distances(int v);
 	int get_parent_in_shortest_path(int, int);
 
+
 private:
 
 	std::map<int, std::vector<int> > shortest_distances;

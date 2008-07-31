@@ -82,6 +82,7 @@ public:
 	void add_edge(int, int, int);
 	void remove_edge(Edge e);
 	void remove_edge(Vertex, Vertex);
+	void remove_edge(int, int);
 
 	void remove_vertex(Vertex v);
 	void remove_vertex(int v);

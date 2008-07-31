@@ -13,6 +13,8 @@
 #include <boost/random.hpp>
 #include <boost/progress.hpp>
 
+#include <boost/format.hpp>
+
 #include "headers/steiner.hpp"
 #include "headers/steiner_solution.hpp"
 #include "headers/steiner_heuristics.hpp"
@@ -28,52 +30,45 @@ SteinerGRASP::SteinerGRASP(Steiner& steiner) :
 
 void SteinerGRASP::run() {
 
-	size_t max_inner_iterations = 1;
+	size_t max_iterations = 100;
 	int k = 0;
 
 	best_cost = INT_MAX;
 	size_t best_root;
 	boost::timer t0;
 
-	//pick random initial terminal
-	boost::uniform_int<> range(0, instance.V - 1);
-	boost::variate_generator<boost::mt19937&, boost::uniform_int<> > die(instance.rng, range);
+	SteinerNodeLocalSearch node_ls;
+	SteinerSolution solution = SteinerHeuristics::generate_network_distance_solution(instance);
 
-	for (size_t i = 0; i < (size_t) instance.V; i++) {
-		//int root = die();
-		int root = i;
-		for (size_t j = 0; j < max_inner_iterations; j++) {
+	cout << "cost initial solution: " << solution.find_cost() << endl;
 
-			SteinerSolution solution = SteinerHeuristics::generate_chins_solution(root, instance);
+	for (size_t i = 0; i < max_iterations; i++) {
 
-			int cost = solution.find_cost();
+		SteinerSolution new_solution = node_ls.key_node_insert(solution);
 
-			SteinerPathLocalSearch::search(solution);
-			int ls_cost = solution.find_cost();
+		int cost = new_solution.find_cost();
 
-			if (ls_cost < cost) {
-				cout << "ls better with " << ls_cost << " over " << cost << "\n";
-				cost = ls_cost;
-			}
+		//SteinerPathLocalSearch::search(new_solution);
+		//cost = new_solution.find_cost();
 
-			SteinerNodeLocalSearch::remove(solution);
-			int nls_cost = solution.find_cost();
+		if (cost < best_cost) {
+			cout << "*** new current best " << cost;
+			cout << "   V: " << new_solution.graph.num_vertices();
+			cout << " E: " << new_solution.graph.num_edges() << "\n";
 
-			if (nls_cost < cost) {
-				cout << "nls better with " << nls_cost << " over " << cost << "\n";
-				cost = nls_cost;
-			}
+			new_solution.check_integrity();
 
-			if (cost < best_cost) {
-				best_cost = cost;
-				best_root = root;
-				cout << "*** new current best " << cost << " with " << root << "\n";
-			}
+			new_solution.graph.writedot((boost::format("%1%.dot") % cost).str());
+			new_solution.writetex((boost::format("%1%.tex") % cost).str());
 
-			k++;
+			best_cost = cost;
+			solution = new_solution;
 		}
+
+		k++;
+		if((k % 5) == 0) cout << "at #" << k << endl;
 	}
 
 	cout << "GRASP finished in " << k << " total iterations in " << t0.elapsed() << " seconds. \n";
-	cout << "best found was " << best_cost << " with root terminal " << best_root << "\n";
+	cout << "best found was " << best_cost << "\n";
 }

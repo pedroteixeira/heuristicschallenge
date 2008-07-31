@@ -26,13 +26,11 @@ public:
 	std::list< std::pair< int,int > > tree;
 	Steiner& instance;
 	Graph graph;
-	IntSet out_key_nodes;
-	IntSet in_key_nodes;
 	IntSet virtual_terminals;
 
 	bool is_terminal(int);
 	bool is_terminal(Vertex);
-	int find_cost();
+	int find_cost() const;
 
 	bool is_out_key_node(int i);
 	bool is_in_key_node(int i);
@@ -46,6 +44,11 @@ public:
 	void find_mst_tree();
 	void undo_last_mst();
 
+	//util
+	void check_integrity();
+
+	void writetex(std::string);
+	void writetext(std::string);
 
 	//'events'
 	void on_key_node_inserted(int);

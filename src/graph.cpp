@@ -94,22 +94,27 @@ void Graph::add_edge(int u_index, int v_index, int weight) {
 		indexmap[v] = V++; //keep indexmap contiguous
 	}
 
-	Edge e; bool inserted;
+	Edge e;
+	bool inserted;
 	boost::tie(e, inserted) = boost::add_edge(u, v, weight, boostgraph);
 
 	/*
-	//TODO: is it better to be explicit about parallel edges? (using setS implies overhead)
-	bool found;
-	boost::tie(e, found) = boost::edge(u, v, boostgraph);
+	 //TODO: is it better to be explicit about parallel edges? (using setS implies overhead)
+	 bool found;
+	 boost::tie(e, found) = boost::edge(u, v, boostgraph);
 
-	if (!found) {
-		bool inserted;
-		boost::tie(e, inserted) = boost::add_edge(u, v, weight, boostgraph);
-		assert(inserted);
-	} else {
-		cerr << "edge already added : " << u_index << ", " << v_index << "\n";
-	}
-	*/
+	 if (!found) {
+	 bool inserted;
+	 boost::tie(e, inserted) = boost::add_edge(u, v, weight, boostgraph);
+	 assert(inserted);
+	 } else {
+	 cerr << "edge already added : " << u_index << ", " << v_index << "\n";
+	 }
+	 */
+}
+
+void Graph::remove_edge(int u, int v) {
+	remove_edge(get_vertex(u), get_vertex(v));
 }
 
 void Graph::remove_edge(Vertex u, Vertex v) {
@@ -204,65 +209,61 @@ int Graph::num_edges() const {
 	return boost::num_edges(boostgraph);
 }
 
+struct cycle_detector: public boost::dfs_visitor<> {
+	cycle_detector(bool& has_cycle, list<Vertex>& cycle, Graph& graph) :
+		_has_cycle(has_cycle), _cycle(cycle), _graph(graph) {
+	}
 
+	void back_edge(Edge e, const BoostGraph& g) {
+		_has_cycle = true;
 
-  struct cycle_detector : public boost::dfs_visitor<>
-  {
-    cycle_detector( bool& has_cycle, list<Vertex>& cycle, Graph& graph)
-      : _has_cycle(has_cycle), _cycle(cycle), _graph(graph) { }
+		Vertex u = boost::source(e, g);
+		Vertex v = boost::target(e, g);
 
+		if (u != _cycle.back())
+			_cycle.push_back(u);
+		else
+			_cycle.push_back(v);
 
-    void back_edge(Edge e, const BoostGraph& g) {
-      _has_cycle = true;
+		throw -1;
+	}
 
-      Vertex u = boost::source(e, g);
-      Vertex v = boost::target(e, g);
+	void discover_vertex(Vertex u, const BoostGraph & g) {
+		_cycle.push_back(u);
+	}
 
-      if(u != _cycle.back())
-      	_cycle.push_back(u);
-      else
-      	_cycle.push_back(v);
-
-      throw -1;
-    }
-
-    void discover_vertex(Vertex u, const BoostGraph & g) {
-    	_cycle.push_back(u);
-    }
-
-    void finish_vertex(Vertex u, const BoostGraph & g) {
-    	_cycle.clear();
-    }
-  protected:
-    bool& _has_cycle;
-    list<Vertex>& _cycle;
-    Graph& _graph;
-  };
-
+	void finish_vertex(Vertex u, const BoostGraph & g) {
+		_cycle.clear();
+	}
+protected:
+	bool& _has_cycle;
+	list<Vertex>& _cycle;
+	Graph& _graph;
+};
 
 bool Graph::has_cycle(list<Vertex>& cycle) {
-  bool has_cycle = false;
+	bool has_cycle = false;
 
-  cycle_detector vis(has_cycle, cycle, *this);
-  /*
-  try {
-  	boost::depth_first_search(boostgraph, boost::visitor(vis));
-  } catch(int) {
-  	return true;
-  }
+	cycle_detector vis(has_cycle, cycle, *this);
+	/*
+	 try {
+	 boost::depth_first_search(boostgraph, boost::visitor(vis));
+	 } catch(int) {
+	 return true;
+	 }
+	 return false;
+	 */
+
+	try {
+		boost::undirected_dfs(boostgraph,
+				boost::root_vertex(*boost::vertices(boostgraph).first) .visitor(vis) .edge_color_map(boost::get(
+						boost::edge_color, boostgraph)));
+
+	} catch (int) {
+		return true;
+	}
+
 	return false;
-	*/
-
-  try {
-  boost::undirected_dfs(boostgraph, boost::root_vertex(*boost::vertices(boostgraph).first)
-					.visitor(vis)
-           .edge_color_map(boost::get(boost::edge_color, boostgraph)));
-
-  }catch(int) {
-  	return true;
-  }
-
-  return false;
 
 }
 
@@ -280,6 +281,7 @@ void Graph::print() {
 	std::cout << std::endl;
 
 }
+
 
 void Graph::writedot(string path) {
 
