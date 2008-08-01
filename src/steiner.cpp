@@ -18,13 +18,12 @@
 #include "headers/steiner_solution.hpp"
 using namespace std;
 
-Steiner::Steiner(const Steiner& steiner) {
-	cout << "Steiner::Steiner(const Steiner& steiner)" << endl;
-
+Steiner::Steiner(const Steiner& steiner)  {
+	//cout << "Steiner::Steiner(const Steiner& steiner)" << endl;
 }
 
-Steiner::Steiner(string path) {
-	cout << "Steiner::Steiner(string path)" << endl;
+Steiner::Steiner(string path, int best) : best_known(best) {
+	//cout << "Steiner::Steiner(string path)" << endl;
 
 	ifstream in_data(path.c_str());
 

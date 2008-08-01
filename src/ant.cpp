@@ -17,8 +17,6 @@
 using namespace std;
 
 AntSteiner::AntSteiner(string instance_path) {
-	instance = new Steiner(instance_path);
-
 	//pre process
 }
 

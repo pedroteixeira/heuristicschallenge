@@ -23,6 +23,7 @@ public:
 
 class SteinerNodeLocalSearch {
 public:
+	SteinerNodeLocalSearch();
 	static void insert(SteinerSolution&);
 	static void remove(SteinerSolution&);
 
@@ -30,6 +31,8 @@ public:
 
 
 private:
+	int k;
+	int best_value;
 	static void connect_graph(int, SteinerSolution&); // TODO: move to sution
 	static void remove_key_node(int, SteinerSolution&);
 	static void insert_key_node(int, SteinerSolution&);

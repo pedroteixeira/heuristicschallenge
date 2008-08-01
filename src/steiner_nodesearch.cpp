@@ -16,6 +16,11 @@
 
 using namespace std;
 
+SteinerNodeLocalSearch::SteinerNodeLocalSearch() : k(0), best_value(INT_MAX) {
+
+}
+
+
 SteinerSolution SteinerNodeLocalSearch::key_node_insert(const SteinerSolution& solution) {
 
 	list<int> virtual_terminals;
@@ -42,8 +47,16 @@ SteinerSolution SteinerNodeLocalSearch::key_node_insert(const SteinerSolution& s
 	foreach(int candidate, candidates_key_nodes) {
 		virtual_terminals.push_back(candidate);
 		SteinerSolution tmp = SteinerHeuristics::generate_chins_solution(virtual_terminals, solution.instance);
-
 		int new_cost = tmp.find_cost();
+
+		//log for report
+		k++;
+		if(new_cost < best_value) best_value = new_cost;
+		if((k % 25) == 0) {
+			cout << k << " " << new_cost << " " << best_value << " " << tmp.graph.num_vertices() << " " << tmp.graph.num_edges() << "\n";
+		}
+
+
 		if (new_cost < original_cost) {
 			return tmp;
 		}

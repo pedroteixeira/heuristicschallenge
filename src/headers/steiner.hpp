@@ -15,13 +15,14 @@
 class Steiner {
 public:
 	Steiner(const Steiner&);
-	Steiner(std::string);
+	Steiner(std::string, int);
 
 	int V; //number of vertices
 	int E; //number of edges
 	Graph graph;
 	IntSet terminals;
 	std::map<int, VertexInfo> vertices_info;
+	int best_known;
 
 	boost::mt19937 rng;
 

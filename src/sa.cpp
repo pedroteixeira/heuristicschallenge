@@ -28,7 +28,7 @@
 using namespace std;
 
 SaSteiner::SaSteiner(string instance_path) {
-	instance = new Steiner(instance_path);
+	instance = new Steiner(instance_path, 0);
 
 	//TODO: pre process
 }

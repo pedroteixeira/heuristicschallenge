@@ -13,6 +13,7 @@
 using namespace std;
 
 
+
 SteinerSolution SteinerHeuristics::generate_network_distance_solution(Steiner& instance) {
 
 	SteinerSolution solution(instance);

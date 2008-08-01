@@ -30,7 +30,7 @@ SteinerGRASP::SteinerGRASP(Steiner& steiner) :
 
 void SteinerGRASP::run() {
 
-	size_t max_iterations = 100;
+	size_t max_iterations = 20;
 	int k = 0;
 
 	best_cost = INT_MAX;
@@ -56,19 +56,22 @@ void SteinerGRASP::run() {
 			cout << "   V: " << new_solution.graph.num_vertices();
 			cout << " E: " << new_solution.graph.num_edges() << "\n";
 
-			new_solution.check_integrity();
-
-			new_solution.graph.writedot((boost::format("%1%.dot") % cost).str());
-			new_solution.writetex((boost::format("%1%.tex") % cost).str());
-
 			best_cost = cost;
 			solution = new_solution;
+
+			if(cost == instance.best_known)
+				break;
 		}
 
 		k++;
-		if((k % 5) == 0) cout << "at #" << k << endl;
 	}
 
 	cout << "GRASP finished in " << k << " total iterations in " << t0.elapsed() << " seconds. \n";
 	cout << "best found was " << best_cost << "\n";
+
+	solution.check_integrity();
+	solution.graph.writedot((boost::format("best_%1%.dot") % best_cost).str());
+	solution.writetex((boost::format("best_%1%.tex") % best_cost).str());
+
+	cout << endl;
 }
