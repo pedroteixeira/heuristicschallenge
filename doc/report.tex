@@ -14,24 +14,25 @@
 
 \title{INF2914 - Metaeurísticas \\ Desafio de Problemas Clássicos}
 \author{Pedro Teixeira}
+\date{July 31th, 2008} 
 
 \begin{document}
 \maketitle
 
 \section{O Problema}
 
-Escolhi abordar o Problema de \textbf{Steiner} em Grafos para o desafio da disciplina, basicamente por dois motivos: por ser um dos mais famosos dos quais eu não conhecia nada, e pelo fato de ser um problema em \textbf{grafos}. Durante as aulas da disciplina tive a oportunidade de trabalhar com metaheurítiscas para os problemas do TSP e do QAP que podem ser representados apenas por uma permutação e queria experimentar com algo diferente.
+Escolhi abordar o Problema de \textbf{Steiner} em Grafos para o desafio da disciplina por dois motivos: é um dos mais famosos dos quais eu não conhecia nada, e pelo fato de ser um problema em \textbf{grafos}. Durante as aulas da disciplina tive a oportunidade de trabalhar com metaheurítiscas para os problemas do TSP e do QAP que podem ser representados apenas por uma permutação e queria experimentar com algo diferente.
 
 \section{As instâncias e os resultado}
 
-As duas instâncias do desafio \textit{steiner-1-2353.stp} (ALUT1181) e \textit{steiner-2-3413.stp} (ALUE5623) foram resolvidas nos valores propostos, inclusive alcançando os \textbf{valores ótimos} para ambas. Lembrando que ALUE5623 é classificada na steinlib com dificuldade NP\footnote{\textit{No polynomial time algorithm is known. Use of an exponential time enumeration sceme like Branch-and-Bound is neccessary.}}.
+As duas instâncias do desafio \textit{steiner-1-2353.stp} (alut1181) e \textit{steiner-2-3413.stp} (alue5623) foram resolvidas nos valores propostos, inclusive alcançando os \textbf{valores ótimos} para ambas. Lembrando que o problema alue5623 é classificada na steinlib com dificuldade NP\footnote{\textit{No polynomial time algorithm is known. Use of an exponential time enumeration sceme like Branch-and-Bound is neccessary.}}.
 
-A solução foi implementada, no período aproximado de uma semana, e esse breve relatório tem o objetivo de ilustrar os resultados obtidos e mencionar as técnicas utilizadas.
+A solução foi implementada, no período \textit{aproximado} de uma semana, e esse breve relatório tem o objetivo de ilustrar os resultados obtidos e mencionar as técnicas utilizadas.
 
 \section{Resolvendo o problema}
 
 \subsection{Visão inicial e decepções}
-A estratégia inicial era: testar Simulated Annealing com alguma vizinha de troca de vértice ou aresta. Se não der certo, tentar algo com Ant System.
+A estratégia inicial era o testar Simulated Annealing com alguma vizinha de troca de vértice ou aresta. Se não der certo, tentar algo com Ant System.
 
 Para construção de uma solução viável usei a heurística de cheapest insert(CHINS) de Takahashi e Matsuyama conforme explicada nesta tese de mestrado\cite{tabu}.
 
@@ -64,7 +65,7 @@ Os valores com a heurística de busca local de inserção de key-nodes:
 \begin{tabular}{|c|c|c|c|c|}
 \hline  Instância & Valor  & Tempo(s)  & \#iterações & OPT  \\ 
 \hline  steiner-1 &  2353 &  95 & 750 & 2353 \\ 
-\hline  steiner-2 &  3413 &  678 & 2850 & 3413  \\ 
+\hline  steiner-2 &  3413 &  1680 & 2850 & 3413  \\ 
 \hline 
 \end{tabular} 
 
